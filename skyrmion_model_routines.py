@@ -36,6 +36,7 @@ import collections
 from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.linalg import orth
+from os import getcwd
 
 ###############################################################################
 
@@ -103,7 +104,9 @@ def loadqInd(qMax, keine_zusaetzlichen_Ringe = True):
     """
     
     """
-    path = "/home/lbeddric/Dokumente/Skyrmimodel/qRoh.ind"
+    path = getcwd() + u"\index_files\qRoh.ind"                                    # windows format
+#    path = getcwd() + "i/ndex_files/qRoh.ind"                                    # linux format
+
     qRohErw = np.genfromtxt(path, dtype = np.int8, delimiter = ",")
     
     if keine_zusaetzlichen_Ringe == True:
@@ -347,9 +350,11 @@ def initmarray(uel, mag0, Q):
 
 def magLoader(B, T):
     """
-    
+    Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.)
     """
-    path = "/home/lbeddric/Dokumente/Skyrmimodel/mag_database/"
+    path = getcwd() + u"\mag_database\\"                                        # windows format
+#    path = getcwd() + "/mag_database/"                                          # linux format
+
     searchB = round(B, 3)
     
     d = np.genfromtxt(path + "B_%s,T_%s.out" %(str(searchB), str(T)), delimiter = ",")
@@ -405,8 +410,10 @@ def Phi4Term2(m, Ringe = 2):
     """
     
     """
-    helper_path = "/home/lbeddric/Dokumente/Skyrmimodel/help_files/%i_Ringe_Phi4.ind" % Ringe
-    inds = np.genfromtxt(helper_path, delimiter = ",", dtype = np.int8)
+    path = getcwd() + u"\index_files\%i_Ringe_Phi4.ind" % Ringe                                        # windows format
+#    path = getcwd() + "/index_files/%i_Ringe_Phi4.ind" % Ringe                                         # linux format    
+
+    inds = np.genfromtxt(path, delimiter = ",", dtype = np.int8)
     
     S = 0.
     for i in inds:
@@ -417,6 +424,9 @@ def Phi4Term2(m, Ringe = 2):
 #------------------------------------------------------------------------------
 
 def Phi2Term(qRoh, m):
+    """
+    
+    """
     qRoh = np.array(qRoh, dtype = np.int8)
     nQ = len(qRoh) - 1
     S = 0.
@@ -563,7 +573,12 @@ def groundState(q1, q2, q3, B, t, DuD, qRoh, qRohErw, mag0, idir, uel):
 #------------------------------------------------------------------------------
 
 def reswriter(xc, t, B):
-    path = "/home/lbeddric/Dokumente/Skyrmimodel/mag_database/"
+    """
+    
+    """
+    path = getcwd() + u"\mag_database\\"                                        # windows format
+#    path = getcwd() + "/mag_database/"                                          # linux format
+
 #    headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[0] = mi[0], mag[1] = mi[1], mag[2] = mr[2] \n " %tuple(xc[:3])
     headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[:,0] = mi[0], mag[:,1] = mi[1], mag[2] = mr[2] B-Feld = %f \n " %(xc[0], xc[1], 0., B)
     mwrite = np.concatenate(([xc[0], xc[1], 0.],[0.,0.], xc[2:])).reshape((-1,3))
