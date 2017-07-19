@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+
 """
 Created on Tue Jul 11 15:21:16 2017
 
@@ -32,12 +33,31 @@ GENERAL COMMENTS:
 
 import numpy as np; np.set_printoptions(threshold = 50)
 import matplotlib.pyplot as plt
-import collections
+import os
 from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.linalg import orth
-from os import getcwd
 
+###############################################################################
+
+###############################################################################
+#######################     setting up pathes       ###########################
+###############################################################################
+#%%
+"""
+defining global pathes
+1. directory of the script containing this function and hence the package!
+2. directory of the index files
+3. directory of the previously calculated magnetizations
+"""
+global package_path
+global index_path
+global mag_path
+    
+package_path = os.path.dirname(os.path.abspath(__file__))
+index_path = os.path.join(package_path, "index_files")
+mag_path = os.path.join(package_path, "mag_database")
+#%%
 ###############################################################################
 
 ###############################################################################
@@ -104,8 +124,9 @@ def loadqInd(qMax, keine_zusaetzlichen_Ringe = True):
     """
     
     """
-    path = getcwd() + u"\index_files\qRoh.ind"                                    # windows format
-#    path = getcwd() + "i/ndex_files/qRoh.ind"                                    # linux format
+    path = os.path.join(index_path, "qRoh.ind")
+#    path = os.getcwd() + u"\index_files\qRoh.ind"                                    # windows format
+#    path = os.getcwd() + "i/ndex_files/qRoh.ind"                                    # linux format
 
     qRohErw = np.genfromtxt(path, dtype = np.int8, delimiter = ",")
     
@@ -352,8 +373,9 @@ def magLoader(B, T):
     """
     Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.)
     """
-    path = getcwd() + u"\mag_database\\"                                        # windows format
-#    path = getcwd() + "/mag_database/"                                          # linux format
+    path = mag_path
+#    path = os.getcwd() + u"\mag_database\\"                                        # windows format
+#    path = os.getcwd() + "/mag_database/"                                          # linux format
 
     searchB = round(B, 3)
     
@@ -410,8 +432,9 @@ def Phi4Term2(m, Ringe = 2):
     """
     
     """
-    path = getcwd() + u"\index_files\%i_Ringe_Phi4.ind" % Ringe                                        # windows format
-#    path = getcwd() + "/index_files/%i_Ringe_Phi4.ind" % Ringe                                         # linux format    
+    path = os.path.join(index_path, "%i_Ringe_Phi4.ind" % Ringe)
+#    path = os.getcwd() + u"\index_files\%i_Ringe_Phi4.ind" % Ringe                                        # windows format
+#    path = os.getcwd() + "/index_files/%i_Ringe_Phi4.ind" % Ringe                                         # linux format    
 
     inds = np.genfromtxt(path, delimiter = ",", dtype = np.int8)
     
@@ -576,8 +599,9 @@ def reswriter(xc, t, B):
     """
     
     """
-    path = getcwd() + u"\mag_database\\"                                        # windows format
-#    path = getcwd() + "/mag_database/"                                          # linux format
+    path = mag_path
+#    path = os.getcwd() + u"\mag_database\\"                                        # windows format
+#    path = os.getcwd() + "/mag_database/"                                          # linux format
 
 #    headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[0] = mi[0], mag[1] = mi[1], mag[2] = mr[2] \n " %tuple(xc[:3])
     headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[:,0] = mi[0], mag[:,1] = mi[1], mag[2] = mr[2] B-Feld = %f \n " %(xc[0], xc[1], 0., B)
