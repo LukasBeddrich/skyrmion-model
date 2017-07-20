@@ -659,8 +659,155 @@ def VecBaseTrafoSky(vec, B, kvec, qRoh, qRohErw, Q1, Q2):
     return nv
 
 ###############################################################################
+
+###############################################################################
+#####################       Fluctuation Matrix       ##########################
 ###############################################################################
 
+def perm_parity(a,b):
+    """
+    helper function for Levi-Civita tensor
+    
+    copied from https://bitbucket.org/snippets/lunaticjudd/doqp7/python-implementation-of-levi-civita
+    
+    Modified from
+    http://code.activestate.com/recipes/578236-alternatve-generation-of-the-parity-or-sign-of-a-p/
+    """
+    
+    a = list(a)
+    b = list(b)
+
+    if sorted(a) != sorted(b): return 0
+    inversions = 0
+    while a:
+        first = a.pop(0)
+        inversions += b.index(first)
+        b.remove(first)
+    return -1 if inversions % 2 else 1
+
+#------------------------------------------------------------------------------
+
+def loop_recursive(dim,n,q,s,paritycheck):
+    """
+    helper function for recursive calculation of the Levi-Civita tensor
+    
+    copied from https://bitbucket.org/snippets/lunaticjudd/doqp7/python-implementation-of-levi-civita
+    """
+    if n < dim:
+        for x in range(dim):
+            q[n] = x
+            loop_recursive(dim,n+1,q,s,paritycheck)
+    else:
+        s.append(perm_parity(q,paritycheck))
+        
+#------------------------------------------------------------------------------
+        
+def LeviCivitaTensor(dim):
+    """
+    Levi-Civita tensor for arbitrary dimensions
+    
+    arguments:
+                dim(int):                   dimension of the levi-civita tensor
+                
+    return:     
+                lct(ndarray[dxd]):          Levi-Civita tensor
+    """
+    qinit = np.zeros(dim)
+    paritycheck = range(dim)
+    flattened_tensor = []
+    loop_recursive(dim,0,qinit,flattened_tensor,paritycheck)
+
+    return np.reshape(flattened_tensor,[dim]*dim)
+
+#------------------------------------------------------------------------------
+
+def krondelta(i,j):
+    """
+    the mathematical kronecker delta
+    """
+    if i == j:
+        return 1
+    else:
+        return 0
+
+#------------------------------------------------------------------------------
+
+def checkVecSum(qRoh, a1, n, nn):
+    """
+    seems to work fine
+    helper function for calculating the fluctuation matrix returns indices required for the 2nd and 3rd term
+    
+    arguments:
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                a1(int):                    first index (neg)
+                n(int):                     second index (pos)
+                nn(int):                    third index (neg)
+                
+    return:     
+                ind(int or None):           the index required for evaluation, or nothing --> no value added to sum
+    """
+    try:
+        ind = np.int(np.where(np.all(qRoh == -qRoh[a1] - qRoh[nn] + qRoh[n], axis = 1))[0])
+        return ind
+    except TypeError:
+        return None
+
+#------------------------------------------------------------------------------
+
+def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD, B):
+    """
+    CURRENTLY NOT WORKING!
+    calculates entries of the fluctuation matrix
+    
+    implement: give result of checkvecsum as argument to g_ij from fluctuationM
+    
+    for later optimization: check krondelta first --> calculate the terms only if needed!
+    
+    """
+    mag = np.concatenate((mag[:,:2] * 1.j, mag[:,2].reshape((-1,1))), axis = 1)
+    kBZ = np.array([kx, ky, kz])
+    nQ = len(qRoh)
+    
+    gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
+            - 0.0073 * (np.dot(q[n],q[n]) + 2*np.dot(q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 * q2**2)) \
+            * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], q[n] + kBZ)
+    if np.allclose(q[n] + kBZ, np.array([0., 0., 0.])):
+        gt12 = DemN[i, j]
+    else:
+        gt12 = ((q[n] + kBZ)[i] * (q[n] + kBZ)[j])/np.dot(q[n] + kBZ, q[n] + kBZ)
+        
+    gt2 = 0.
+    gt3 = 0.
+    for a1 in xrange(nQ):
+        ind = checkVecSum(qRoh, a1, n, nn)
+        try:
+            gt2 += np.dot(mag[a1], mag[ind])
+            gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
+        except IndexError:
+            print "Not a valid index given for calculating fluctuation matrix"
+            
+    return krondelta(n, nn) * (gt11 + DuD/2. * gt12) + 2 * gt2 + 4 * gt3
+    
+#------------------------------------------------------------------------------
+
+def fluctuationM(B, kvec, nQ, n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD):
+    """
+    kvec limited to 1.BZ
+    """
+    M = [[[[g_ij(n, nn, i, j, kvec[0], kvec[1], kvec[2], qRoh, mag, q, q1, q2, q3, t, DuD, B) for i in xrange(3)] for j in xrange(3)] for n in xrange(nQ)] for nn in xrange(nQ)]
+    M = np.array(M)
+    return M
+
+#------------------------------------------------------------------------------
+
+def fluctuationMFalt():
+    """
+    
+    """
+    pass
+
+###############################################################################
+###############################################################################
 
 ###############################################################################
 #####################   PLAYGROUND / PROGRAMM   ###############################
