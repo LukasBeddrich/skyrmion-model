@@ -754,7 +754,7 @@ def checkVecSum(qRoh, a1, n, nn):
 
 #------------------------------------------------------------------------------
 
-def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD, B):
+def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
     """
     CURRENTLY NOT WORKING!
     calculates entries of the fluctuation matrix
@@ -767,6 +767,8 @@ def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD, B):
     mag = np.concatenate((mag[:,:2] * 1.j, mag[:,2].reshape((-1,1))), axis = 1)
     kBZ = np.array([kx, ky, kz])
     nQ = len(qRoh)
+    
+    gt11 = ()
     
     gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
             - 0.0073 * (np.dot(q[n],q[n]) + 2*np.dot(q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 * q2**2)) \
@@ -787,6 +789,47 @@ def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD, B):
             print "Not a valid index given for calculating fluctuation matrix"
             
     return krondelta(n, nn) * (gt11 + DuD/2. * gt12) + 2 * gt2 + 4 * gt3
+
+#------------------------------------------------------------------------------
+
+def g_ij2(n, nn, i, j, cSind, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
+    """
+    CURRENTLY NOT WORKING!
+    calculates entries of the fluctuation matrix
+    
+    implement: give result of checkvecsum as argument to g_ij from fluctuationM
+    
+    for later optimization: check krondelta first --> calculate the terms only if needed!
+    
+    """
+    mag = np.concatenate((mag[:,:2] * 1.j, mag[:,2].reshape((-1,1))), axis = 1)
+    kBZ = np.array([kx, ky, kz])
+    nQ = len(qRoh)
+    
+    gt11 = 0.
+    gt12 = 0.
+    gt2 = 0.
+    gt3 = 0.
+    
+    if n == nn:
+        gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
+            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 * q2**2)) \
+            * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
+    
+        if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
+            gt12 = DemN[i, j]
+        else:
+            gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
+        
+    for a1 in xrange(nQ):
+        try:
+            gt2 += np.dot(mag[a1], mag[cSind])
+            gt3 += mag[a1, i] * mag[cSind, j]             # why should I run the loop twice? -> calc both at same time
+        except IndexError:
+            print "Not a valid index given for calculating fluctuation matrix"
+            
+    return gt11 + DuD/2. * gt12 + 2 * krondelta(i, j) * gt2 + 4 * gt3
+    
     
 #------------------------------------------------------------------------------
 
