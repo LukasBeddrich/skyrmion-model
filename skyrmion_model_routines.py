@@ -296,7 +296,15 @@ def unique_entries(Q):
 
 def buildmag0(uel, idir = dirNSky):
     """
+    initializing the magnetization for minimization
     
+    arguments:
+                uel(list):                  list of unique entries of  hex lattice points
+                idir(ndarray[1x3]):         direction of magnetic field
+                
+    return:
+                mag0real(ndarray[len(uel)+1xm]):
+                                            initial magnetization of high symmetry points of the hex lattice but still REAL values
     """
     mr = np.zeros((len(uel) +1 , 3)); mr[0,2] = mrStart(0, 2,idir)
     mi = np.zeros((len(uel) +1 , 3)); mi[0] = miStart(0, idir)
@@ -756,28 +764,19 @@ def checkVecSum(qRoh, a1, n, nn):
 
 def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
     """
-    CURRENTLY NOT WORKING!
-    calculates entries of the fluctuation matrix
-    
-    implement: give result of checkvecsum as argument to g_ij from fluctuationM
-    
-    for later optimization: check krondelta first --> calculate the terms only if needed!
-    
+    USE g_ij2 INSTEAD!
     """
     mag = np.concatenate((mag[:,:2] * 1.j, mag[:,2].reshape((-1,1))), axis = 1)
     kBZ = np.array([kx, ky, kz])
     nQ = len(qRoh)
     
-    gt11 = ()
-    
     gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
-            - 0.0073 * (np.dot(q[n],q[n]) + 2*np.dot(q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 * q2**2)) \
-            * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], q[n] + kBZ)
-    if np.allclose(q[n] + kBZ, np.array([0., 0., 0.])):
+            - 0.0073 * (np.dot(Q[n],Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
+            * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
+    if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
         gt12 = DemN[i, j]
     else:
-        gt12 = ((q[n] + kBZ)[i] * (q[n] + kBZ)[j])/np.dot(q[n] + kBZ, q[n] + kBZ)
-        
+        gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
     gt2 = 0.
     gt3 = 0.
     for a1 in xrange(nQ):
@@ -785,15 +784,27 @@ def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
         try:
             gt2 += np.dot(mag[a1], mag[ind])
             gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
+
         except IndexError:
-            print "Not a valid index given for calculating fluctuation matrix"
-            
+            print "Not a valid index given for calculating fluctuation matrix"   
     return krondelta(n, nn) * (gt11 + DuD/2. * gt12) + 2 * gt2 + 4 * gt3
 
 #------------------------------------------------------------------------------
 
-def g_ij2(n, nn, i, j, cSind, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
+def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
+    calculates the components of the fluctuation matrix.
+    
+    arguments:
+                n, nn(int):                 index in [0, len(qRoh)[
+                i, j(int):                  index in [0,2[
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState
+                Q(ndarray[mx3]):            hex lattice vectors
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction?
     CURRENTLY NOT WORKING!
     calculates entries of the fluctuation matrix
     
@@ -813,7 +824,7 @@ def g_ij2(n, nn, i, j, cSind, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
     
     if n == nn:
         gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
-            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 * q2**2)) \
+            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
             * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
     
         if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
@@ -822,9 +833,10 @@ def g_ij2(n, nn, i, j, cSind, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
             gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
         
     for a1 in xrange(nQ):
+        ind = checkVecSum(qRoh, a1, n, nn)
         try:
-            gt2 += np.dot(mag[a1], mag[cSind])
-            gt3 += mag[a1, i] * mag[cSind, j]             # why should I run the loop twice? -> calc both at same time
+            gt2 += np.dot(mag[a1], mag[ind])
+            gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
         except IndexError:
             print "Not a valid index given for calculating fluctuation matrix"
             
@@ -833,13 +845,23 @@ def g_ij2(n, nn, i, j, cSind, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
     
 #------------------------------------------------------------------------------
 
-def fluctuationM(B, kvec, nQ, n, nn, i, j, kx, ky, kz, qRoh, mag, q, q1, q2, q3, t, DuD):
+def fluctuationM(kvec, nQ, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
+    NEEDS revision
+    calculates the whole fluctuation Matrix with size 3nQx3nQ
+    
+    arguments:
+                kvec
+    
     kvec limited to 1.BZ
     """
-    M = [[[[g_ij(n, nn, i, j, kvec[0], kvec[1], kvec[2], qRoh, mag, q, q1, q2, q3, t, DuD, B) for i in xrange(3)] for j in xrange(3)] for n in xrange(nQ)] for nn in xrange(nQ)]
-    M = np.array(M)
-    return M
+    fM = np.zeros((3*nQ, 3*nQ), dtype = np.complex)
+    for n in xrange(nQ):
+        for nn in xrange(nQ):
+            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
+            fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
+
+    return fM
 
 #------------------------------------------------------------------------------
 
