@@ -394,10 +394,24 @@ def magLoader(B, T):
 
 def indexMap(kvec, qRoh, qRohErw, Q1, Q2):
     """
+    relates the known properties of the hex lattice points with the new (shifted) ones
     
+    arguments:
+                kvec(ndarray[1x3]):         shift vector in the hex lattice
+                qRoh(ndarray[mx2]):
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+    
+    return:
+                dict(dic):                  "IndexPosList" : old indices of qRoh
+                                            "IndexNewPosList" : new arangement of indices after shift
+                                            "minpos" : qRoh index of nearest hex lattice point to kvec
+                
+
     """
     IndexNewPosList = []
-    minpos = np.argmin([np.linalg.norm(kvec-q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # my solution not as in mathematica
+    minpos = np.argmin([np.linalg.norm(kvec+q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # not entirely sure why a plus is needed here...
     
     IndexPosList = np.asarray([np.where(np.all(qRohErw == qRohErw[i], axis = 1))[0] for i in xrange(len(qRohErw))], dtype = np.uint8)
     temp = [np.where(np.all(qRohErw + qRohErw[minpos] == qRohErw[j], axis = 1))[0] for j in xrange(len(qRohErw))]
@@ -624,18 +638,23 @@ def reswriter(xc, t, B):
 #####################   VecBase/MatBaseTrafos(Sky)   ##########################
 ###############################################################################
 
-def VecBaseTrafoSky(vec, B, kvec, qRoh, qRohErw, Q1, Q2):
+def VecBaseTrafoSky(vec, kvec, qRoh, qRohErw, Q1, Q2):
     """
-    How does it work in my lattice with its indices? :P
+    shifting/ transforming (mostly) row or colum vectors of the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
     
     arguments:
-                vec(ndarray[3?]):           in the extended system
-                B(?x?>1):                   ??? Brillouin ???
+                vec(mod3(len(vec))=0):      vector to be transformed
                 kvec(ndarrray[3?]):         K-vector (also neg. possible)
                 qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
                 
     return:     
-                nv(?):                      ???
+                nv:                      transformed vector
     """
     
     vecp = vec.reshape((-1, 3))     # casts vec into mx3
@@ -647,24 +666,67 @@ def VecBaseTrafoSky(vec, B, kvec, qRoh, qRohErw, Q1, Q2):
     imap = indexMap(kvec, qRoh, qRohErw, Q1, Q2)
     IndexPosList = imap["IndexPosList"]
     IndexNewPosList = imap["IndexNewPosList"]
-#    minpos = np.argmin([np.linalg.norm(kvec-q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # my solution not as in mathematica
-    kBZ = kvec - q(imap["minpos"], qRoh, qRohErw, Q1, Q2)
-    
-#    IndexPosList = np.asarray([np.where(np.all(qRohErw == qRohErw[i], axis = 1))[0] for i in xrange(len(qRohErw))], dtype = np.int8)
-#    temp = [np.where(np.all(qRohErw - qRohErw[minpos] == qRohErw[j], axis = 1))[0] for j in xrange(len(qRohErw))]   # I changed "+" to "-" inside where(...)
-#    IndexNewPosList = []
-#    for k in temp:
-#        try:
-#            IndexNewPosList.append([k[0]])
-#        except IndexError:
-#            IndexNewPosList.append([None])
+
+#    kBZ = kvec - q(imap["minpos"], qRoh, qRohErw, Q1, Q2)
     
     nv =  np.zeros((len(qRohErw), 3), np.complex)
     for l in xrange(len(qRohErw)):
-        if IndexNewPosList[l][0] != None and IndexPosList[l, 0] < len(vecp):
-            nv[IndexNewPosList[l][0]] = vecp[IndexPosList[l, 0]]
+        if IndexNewPosList[l][0] != None and IndexPosList[l, 0] < len(vecp):    # first most important line
+            nv[IndexNewPosList[l][0]] = vecp[IndexPosList[l, 0]]                # second most important line
             
     return nv
+
+#------------------------------------------------------------------------------
+
+def MatBaseTrafo(mat, kvec, qRoh, qRohErw, Q1, Q2):
+    """
+    shifting/ transforming (mostly) the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
+    
+    arguments:
+                vec(mod3(len(vec))=0):      vector to be transformed
+                kvec(ndarrray[3?]):         K-vector (also neg. possible)
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+                
+    return:     
+                Tmat(ndarray[(nQ+1)*3x(nQ+1)*3]):
+                                            transformed matrix
+    """
+    tempm = np.transpose([VecBaseTrafoSky(i, kvec, qRoh, qRohErw, Q1, Q2).flatten() for i in mat])
+    Tmat = np.transpose([VecBaseTrafoSky(j, kvec, qRoh, qRohErw, Q1, Q2).flatten() for j in tempm])
+    return Tmat
+
+#------------------------------------------------------------------------------
+
+def MatBaseTrafo2(mat, kvec, qRoh, qRohErw, Q1, Q2):
+    """
+    shifting/ transforming (mostly) the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
+    
+    arguments:
+                vec(mod3(len(vec))=0):      vector to be transformed
+                kvec(ndarrray[3?]):         K-vector (also neg. possible)
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+                
+    return:     
+                Tmat(ndarray[(nQErw+1)*3x(nQErw+1)*3]):
+                                            transformed matrix
+    """
+    nQdiff = len(qRohErw) - len(qRoh)
+    tempfillm = np.asarray([np.concatenate((i, np.zeros(3*nQdiff))) for i in mat])
+    tempfullm = np.concatenate((tempfillm, np.zeros((3*nQdiff,3*len(qRohErw)))))
+    
+    return MatBaseTrafo(tempfullm, kvec, qRoh, qRohErw, Q1, Q2)
 
 ###############################################################################
 
@@ -871,6 +933,72 @@ def fluctuationMFalt():
     """
     pass
 
+###############################################################################
+
+###############################################################################
+#####################     visualizations     ##################################
+###############################################################################
+
+def vis_n_x_system(qRoh, qRohErw):
+    """
+    
+    """
+    # initialize whatsoever
+    nQ = len(qRoh) - 1
+    nQErw = len(qRohErw) - 1
+    
+    # lattice with unshifted BZ
+    q_qRoh = np.array([np.array([0., 0., 0.])] + [q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(1,nQ+1)])
+    q_qRohErw = np.array([np.array([0., 0., 0.])] + [q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(1,nQErw+1)])
+    
+    # plot unshifted BZ with extended lattice
+    plt.figure(facecolor = "w", figsize = (10.,10.))
+    plt.plot(q_qRoh[:,0], q_qRoh[:,1], marker = "o", color = "red", ls = "None", label = "normal system")
+    plt.plot(q_qRohErw[:,0], q_qRohErw[:,1], marker = ".", color = "k", ls = "None", label = "extended system")
+    plt.legend(loc = "upper left", numpoints = 1)
+    for i in xrange(nQ + 1):
+#        plt.text(q_qRoh[i,0] + 0.05, q_qRoh[i,1] + 0.05, "Q(%s)"%str(np.round(np.linalg.norm(q_qRoh[i]),3)), color = "red", fontsize = 7.)
+        plt.text(q_qRoh[i,0] + 0.05, q_qRoh[i,1] + 0.05, "Q(%s)"%str(i), color = "red", fontsize = 7.)
+    for j in xrange(nQErw + 1):
+        plt.text(q_qRohErw[j,0] - 0.2, q_qRohErw[j,1] - 0.3, "Q(%s)"%str(j), color = "k", fontsize = 7.)
+        
+    
+    # new approach to initialize and plot the shifted system, I hope for deeper understanding
+    shiftvect = np.array([2.1, 1.3, 0.])
+    imap = indexMap(shiftvect, qRoh, qRohErw, Q1, Q2)
+    
+    # new coordinates of the normal system
+    qq_qRoh = np.asarray([q(imap["IndexNewPosList"][i][0], qRoh, qRohErw, Q1, Q2) for i in xrange(len(qRohErw)) if imap["IndexNewPosList"][i][0] != None and imap["IndexPosList"][i][0] < len(qRoh)])
+    #getting the old entries at the new lattice sites ; which of the two next line does not make a difference
+    #qstr = np.asarray([np.asarray(imap["IndexPosList"][i]) for i in xrange(len(qRohErw)) if imap["IndexNewPosList"][i][0] != None and imap["IndexPosList"][i][0] < len(qRoh)])
+    qstr = np.asarray([np.asarray(imap["IndexPosList"][i]) for i in xrange(len(qRoh))])
+    
+    
+    """
+    # not sure what this does exactly... guess I did know once xP
+    vectlong = np.asarray([[k,k,k] for k in xrange(1, nQ + 2)])
+    kvect = np.array([2.1, 1.3, 0.])
+    
+    nv = VecBaseTrafoSky(vectlong, 0.15, kvect, qRoh, qRohErw, Q1, Q2)
+    imap = indexMap(kvect, qRoh, qRohErw, Q1, Q2)
+    
+    qq_qRoh = np.asarray([q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(len(nv)) if nv[i,0] != 0.])
+    qstr = np.asarray([np.where(np.asarray(imap["IndexNewPosList"]) == i)[0] for i in xrange(len(nv)) if nv[i,0] != 0.])
+    
+    """
+    # plot shifted BZ with extended lattice
+    plt.figure(facecolor = "w", figsize = (10.,10.))
+    plt.plot(qq_qRoh[:,0], qq_qRoh[:,1], marker = "s", color = "blue", ls = "None", label = "shifted system")
+    plt.plot(q_qRohErw[:,0], q_qRohErw[:,1], marker = ".", color = "k", ls = "None", label = "extended system")
+    plt.arrow(0., 0., shiftvect[0], shiftvect[1], head_width = 0.2, head_length = 0.4, length_includes_head = True, color = "green", label = "K-vector")
+    plt.legend(loc = "upper left", numpoints = 1)    
+    for j in xrange(nQErw + 1):
+        plt.text(q_qRohErw[j,0] - 0.2, q_qRohErw[j,1] - 0.3, "Q(%s)"%str(j), color = "k", fontsize = 7.)
+        
+    for i in xrange(nQ + 1):
+#        plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(np.round(np.abs(np.linalg.norm(qq_qRoh[i] - q(34, qRoh, qRohErw, Q1, Q2))),3)), color = "blue", fontsize = 7.)
+        plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(qstr[i][0]), color = "blue", fontsize = 7.)
+    
 ###############################################################################
 ###############################################################################
 
