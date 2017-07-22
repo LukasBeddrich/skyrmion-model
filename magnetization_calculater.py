@@ -58,7 +58,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 3.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 2.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -95,11 +95,11 @@ uel = smr.unique_entries(Q)
 
 mag0real = smr.buildmag0(uel)
 
-Ringe = 3
+Ringe = 2
 
 ###############################################################################
 
-for i in np.round([BC2/2.-BC2/32., BC2/2.+BC2/32.], 3):
+for i in np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
 
     t0 = time()
     res = smr.groundState(q1, q2, q3, i * dirNSky, t, DuD, qRoh, qRohErw, mag0real, dirNSky, uel, Ringe)

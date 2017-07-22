@@ -391,9 +391,18 @@ def initmarray(uel, mag0, Q):
 
 #------------------------------------------------------------------------------
 
-def magLoader(B, T):
+def magLoader(B, T, Ringe):
     """
-    Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.)
+    Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.) and # of rings used
+    
+    arguments:
+                B(float):                   magnetic field strength in unspecified units
+                T(float):                   temperature in unspecified units
+                Ringe(int):                 number of rings in reciprocal space, used for calculation
+    
+    return:
+                q1, q2, q3(float):          components of the new Q1 lattice vector
+                mag0realg(ndarray[mx3]):    real values of the magnetization of the high symmetry lattice points
     """
     path = mag_path
 #    path = os.getcwd() + u"\mag_database\\"                                        # windows format
@@ -401,7 +410,7 @@ def magLoader(B, T):
 
     searchB = round(B, 3)
     
-    d = np.genfromtxt(path + "B_%s,T_%s.out" %(str(searchB), str(T)), delimiter = ",")
+    d = np.genfromtxt(os.path.join(path, "B_%s,T_%s,R_%i.out" %(str(searchB), str(T), Ringe)), delimiter = ",")
     return d[0], d[1:]
 
 #------------------------------------------------------------------------------
@@ -971,6 +980,127 @@ def fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     kBZ = kvec - Q[minpos]
     
     return MatBaseTrafo2(fluctuationM(kBZ[0], kBZ[1], kBZ[2], qRoh, mag, Q, q1, q2, q3, t, DuD), kvec, qRoh, qRohErw, Q[3], Q[1])
+
+###############################################################################
+
+###############################################################################
+#####################     linear Algebra     ##################################
+###############################################################################
+
+def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
+    """
+    Does what "SelectedEigenvectors", "MidSelectedEigenvectors", "UnSelectedEigenvectors" at once.
+    Should do the trick for mCross as well as mCrossFalt
+    
+    arguments:
+                mCross(ndarray):            mCross matrix of the magnetization
+                maxcutoff(float):           selects the usefull eigenvectors, -values
+                retless(bool):              True -> returns only usefull
+    return:
+                vecs(ndarray):              transposed array of orthonormalized eigenvectors first orthonormalized eigvec = vecs[:,0]
+    """
+    eigval, eigvec = np.linalg.eig(mCross)
+    eigvec = eigvec.T
+    eigvalcut = max(eigval) * maxcutoff
+    
+    eigvecmax, eigvecmid, eigvecun = [], [], []
+    
+    for i in xrange(len(eigval)):
+        if eigval[i] < 0.01:
+            eigvecun.append(eigvec[i])
+        elif eigval[i] >= eigvalcut:
+            eigvecmax.append(eigvec[i])
+        else:
+            eigvecmid.append(eigvec[i])
+            
+    if retless:
+        return orth(np.asarray(eigvecmax)).T
+    else:
+        return orth(np.asarray(eigvecmax)).T, orth(np.asarray(eigvecmid)).T, orth(np.asarray(eigvecun)).T
+
+###############################################################################
+
+###############################################################################
+#####################       Mx Matrix       ###################################
+###############################################################################
+
+def positionAddQtoN(b, c, qRoh):
+    """
+    needed to include the additional momentum structure and the fouriercomponents in Mx
+    
+    arguments:
+                b(int):                     one of the indices
+                c(int):                     another index
+                qRoh(ndarray[mx2]):         index pairs of the hex lattice
+                
+    return:
+                ind(int):                   index which fullfills condition or -1
+    """
+    try:
+        ind = np.int(np.where(np.all(qRoh == qRoh[b] + qRoh[c], axis = 1))[0])
+        return ind
+    except TypeError:
+        return -1
+
+#------------------------------------------------------------------------------
+
+def mCrossMatrix(mag, qRoh):
+    """
+    calculates the crossMatrix
+    
+    arguments:
+                mag(ndarray[mx3]):          full, complex magnetization
+                qRoh(ndarray[mx2]):         index pairs of the hex lattice
+                
+    return:
+                mx(ndarray):                
+    """
+    nQloc = len(qRoh)
+    
+    mx = np.zeros((3*(nQ+1), 3*(nQ+1)), dtype = np.complex)
+    
+    for b in xrange(nQloc):                                                    # nicht 100% sicher wegen nQloc
+        for c in xrange(nQloc):
+            for i in xrange(3):
+                for j in xrange(3):
+                    for l in xrange(3):
+                        
+                        pos = positionAddQtoN(b,c, qRoh)
+                        if pos != -1:
+                            mx[3*pos + i, 3*c + l] += LeviCivitaTensor(3)[i,j,l] * mag[b,j]
+                            
+    return mx
+                
+#------------------------------------------------------------------------------
+
+def mCrossMatrixFalt(mag, qRoh, qRohErw, kvec, Q1, Q2):
+    """
+    calculates the crossMatrix
+    
+    arguments:
+                mag(ndarray[mx3]):          full, complex magnetization
+                qRoh(ndarray[mx2]):         index pairs of the hex lattice
+                qRohErw(ndarray[nx2]):      index pairs of the extended hex lattice
+                kvec(ndarray[1x3]):         shift vector in the hex lattice
+                Q1, Q2(ndarray[1x3]):       base vectors hex lattice in groundState
+                
+    return:
+                mxFalt(ndarray):            Matrix with shifted origin
+    """
+    return MatBaseTrafo2(mCrossMatrix(mag, qRoh), kvec, qRoh, qRohErw, Q1, Q2)
+
+###############################################################################
+
+###############################################################################
+#####################    inverse susceptibility    ############################
+###############################################################################
+
+def mCrossSel(mag, qRoh):
+    """
+    Hier weitermachen!
+    """
+    mx = mCrossMatrix(mag, qRoh)
+    seleigvec = SelectedEigenvectors(mx)
 
 ###############################################################################
 
