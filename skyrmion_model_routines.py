@@ -9,7 +9,7 @@ Created on Tue Jul 11 15:21:16 2017
 
 """ What could possibly go wrong??? """
 
-""" Another implementation of the original Mathematica Skyrmion Model by Markus Garst et. al """
+""" Another implementation of the original Mathematica Skyrmion Model by Johannes Waizner and Markus Garst et. al """
 
 """
 
@@ -337,6 +337,20 @@ def rot_vec(vec, axdir, angle):
     return np.dot(R, vec)
 
 #------------------------------------------------------------------------------
+def magtoimag(mag0real):
+    """
+    returns the complex magnetization for high symmetry lattice points
+    
+    arguments:
+                mag0real(ndarray[len(uel)x3]):
+                                            magnetization initialized by buildmag0
+    return:
+                mag0(ndarray[len(uel)x3]):  mag0real[:,:2] are nw imaginary
+    """
+    
+    return np.concatenate((mag0real[:,:2] * 1.j, mag0real[:,2].reshape((-1,1))), axis = 1)
+    
+#------------------------------------------------------------------------------
 
 def initmarray(uel, mag0, Q):
     """
@@ -606,7 +620,7 @@ def setupMinimization(x0, B, t, DuD, qRoh, qRohErw, idir, uel):
 
 def groundState(q1, q2, q3, B, t, DuD, qRoh, qRohErw, mag0, idir, uel):
     """
-    
+    calculates the magnetization of the groundstate. Every high symmetry point gets m
     """
 #    x0 = np.concatenate(([q1, q2, q3], mag0.flatten()))
     x0 = np.concatenate(([q1,q2], mag0.flatten()[2:]))                          # leave out q3 and mi[0,0], mi[0,1]
@@ -820,7 +834,7 @@ def checkVecSum(qRoh, a1, n, nn):
         ind = np.int(np.where(np.all(qRoh == -qRoh[a1] - qRoh[nn] + qRoh[n], axis = 1))[0])
         return ind
     except TypeError:
-        return None
+        return .1
 
 #------------------------------------------------------------------------------
 
@@ -862,22 +876,15 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
                 i, j(int):                  index in [0,2[
                 kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
                 qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
-                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState
-                Q(ndarray[mx3]):            hex lattice vectors
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
                 q1, q2, q3(float):          components of Q1 after minimization process
                 t(float):                   temperature (somehow)
-                DuD(float):                 Dipole interaction?
-    CURRENTLY NOT WORKING!
-    calculates entries of the fluctuation matrix
-    
-    implement: give result of checkvecsum as argument to g_ij from fluctuationM
-    
-    for later optimization: check krondelta first --> calculate the terms only if needed!
-    
+                DuD(float):                 Dipole interaction strength
     """
-    mag = np.concatenate((mag[:,:2] * 1.j, mag[:,2].reshape((-1,1))), axis = 1)
+    
     kBZ = np.array([kx, ky, kz])
-    nQ = len(qRoh)
+    nQloc = len(qRoh)
     
     gt11 = 0.
     gt12 = 0.
@@ -894,32 +901,43 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
         else:
             gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
         
-    for a1 in xrange(nQ):
+    for a1 in xrange(nQloc):
         ind = checkVecSum(qRoh, a1, n, nn)
         try:
             gt2 += np.dot(mag[a1], mag[ind])
             gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
         except IndexError:
-            print "Not a valid index given for calculating fluctuation matrix"
+            pass
             
     return gt11 + DuD/2. * gt12 + 2 * krondelta(i, j) * gt2 + 4 * gt3
     
     
 #------------------------------------------------------------------------------
 
-def fluctuationM(kvec, nQ, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
-    NEEDS revision
-    calculates the whole fluctuation Matrix with size 3nQx3nQ
+    kvec = np.array([kx, ky, lz]) limited to 1. BZ
+    calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
     
     arguments:
-                kvec
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
     
-    kvec limited to 1.BZ
+    return:
+                fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
+                                            full, not shifted fluctuation matrix
     """
-    fM = np.zeros((3*nQ, 3*nQ), dtype = np.complex)
-    for n in xrange(nQ):
-        for nn in xrange(nQ):
+    
+    nQloc = len(qRoh)
+    
+    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
+    for n in xrange(nQloc):
+        for nn in xrange(nQloc):
             subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
             fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
 
@@ -927,11 +945,32 @@ def fluctuationM(kvec, nQ, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
 
 #------------------------------------------------------------------------------
 
-def fluctuationMFalt():
+def fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    kvec = np.array([kx, ky, lz]) not limited to 1. BZ any more
+    calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
+    
+    arguments:
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
+    
+    return:
+                fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
+                                            full, possibly shifted fluctuation matrix
     """
     
-    """
-    pass
+    
+    kvec = np.asarray([kx, ky, kz])
+    minpos = indexMap(kvec, qRoh, qRohErw, Q[3], Q[1])["minpos"]                # Q1 == Q[3] and Q2 == Q[1] is in this convention always true
+    
+    kBZ = kvec - Q[minpos]
+    
+    return MatBaseTrafo2(fluctuationM(kBZ[0], kBZ[1], kBZ[2], qRoh, mag, Q, q1, q2, q3, t, DuD), kvec, qRoh, qRohErw, Q[3], Q[1])
 
 ###############################################################################
 
