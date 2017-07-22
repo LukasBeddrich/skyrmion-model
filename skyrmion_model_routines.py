@@ -557,7 +557,7 @@ def HighQcorr(qRoh, m, q, q1, q2, q3):
 
 #------------------------------------------------------------------------------
 
-def free_energy(qRoh, m, q, q1, q2, q3, B, t, DuD):
+def free_energy(qRoh, m, q, q1, q2, q3, B, t, DuD, Ringe):
     """
     Sum of all terms contributing to the total free energy.
     
@@ -578,7 +578,7 @@ def free_energy(qRoh, m, q, q1, q2, q3, B, t, DuD):
     """
 
 #    f = Phi4Term(qRoh, m)
-    f = Phi4Term2(m, 2)                                                          # don't check all the indices again and again...
+    f = Phi4Term2(m, Ringe)                                                          # don't check all the indices again and again...
     f += (1.+t) * Phi2Term(qRoh, m)
     f += qPhi2Term(qRoh, m, q)
     f += DsyaTerm(qRoh, m, q)
@@ -593,7 +593,7 @@ def free_energy(qRoh, m, q, q1, q2, q3, B, t, DuD):
 #######################    minimization routines    ###########################
 ###############################################################################
 
-def setupMinimization(x0, B, t, DuD, qRoh, qRohErw, idir, uel):
+def setupMinimization(x0, B, t, DuD, qRoh, qRohErw, idir, uel, Ringe):
     """
     callable of the minimization routine
     mr[0,0] & mr[0,1] actually should not be part of optimization routine...
@@ -614,24 +614,24 @@ def setupMinimization(x0, B, t, DuD, qRoh, qRohErw, idir, uel):
 
     mag = initmarray(uel, mag0, Q)
     
-    return free_energy(qRoh, mag, Q, q1, q2, q3, B, t, DuD)
+    return free_energy(qRoh, mag, Q, q1, q2, q3, B, t, DuD, Ringe)
 
 #------------------------------------------------------------------------------
 
-def groundState(q1, q2, q3, B, t, DuD, qRoh, qRohErw, mag0, idir, uel):
+def groundState(q1, q2, q3, B, t, DuD, qRoh, qRohErw, mag0, idir, uel, Ringe):
     """
     calculates the magnetization of the groundstate. Every high symmetry point gets m
     """
 #    x0 = np.concatenate(([q1, q2, q3], mag0.flatten()))
     x0 = np.concatenate(([q1,q2], mag0.flatten()[2:]))                          # leave out q3 and mi[0,0], mi[0,1]
     
-    erg = minimize(setupMinimization, x0, method = "BFGS", args = (B, t, DuD, qRoh, qRohErw, idir, uel), options = {"gtol" : 1e-7,"disp" : True})
+    erg = minimize(setupMinimization, x0, method = "BFGS", args = (B, t, DuD, qRoh, qRohErw, idir, uel, Ringe), options = {"gtol" : 1e-7,"disp" : True})
     
     return erg
 
 #------------------------------------------------------------------------------
 
-def reswriter(xc, t, B):
+def reswriter(xc, t, B, Ringe):
     """
     
     """
@@ -642,7 +642,7 @@ def reswriter(xc, t, B):
 #    headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[0] = mi[0], mag[1] = mi[1], mag[2] = mr[2] \n " %tuple(xc[:3])
     headerstr = "the q's: q1 = %f, q2 = %f, q3 = %f \n mag[:,0] = mi[0], mag[:,1] = mi[1], mag[2] = mr[2] B-Feld = %f \n " %(xc[0], xc[1], 0., B)
     mwrite = np.concatenate(([xc[0], xc[1], 0.],[0.,0.], xc[2:])).reshape((-1,3))
-    np.savetxt(path + "B_%s,T_%s.out" %(str(round(B,3)), str(t)), mwrite, delimiter = ",", header = headerstr)
+    np.savetxt(os.path.join(path, "B_%s,T_%s,R_%i.out" %(str(round(B,3)), str(t), Ringe)), mwrite, delimiter = ",", header = headerstr)
     
 #------------------------------------------------------------------------------
 
