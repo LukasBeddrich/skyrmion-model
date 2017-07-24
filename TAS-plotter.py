@@ -57,6 +57,9 @@ class TAS_measurement(object):
     def load_spec(self):
         self._specdata = np.genfromtxt(os.path.join(self.__dpath, self.__fname))
         
+    def load_params(self):
+        self._params = params
+        
 ###############################################################################
 
 class TAS_measurements_comb(TAS_measurement):
@@ -64,9 +67,14 @@ class TAS_measurements_comb(TAS_measurement):
     
     """
 
+###############################################################################
 
-
-
+class ParamConverter(object):
+    """
+    
+    """
+    
+    self.sth = "sth"
 
 
 

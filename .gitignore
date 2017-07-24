@@ -4,7 +4,7 @@
 *.pyc
 correct_oder.py
 what_could_possibly_go_wrong.py
-magnetization_calculator.py 
+#magnetization_calculator.py 
 #########################################
 
 # Built application files
