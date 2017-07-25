@@ -58,7 +58,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 3.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 4.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -115,6 +115,7 @@ def g(x, fac):
     return fac*x * np.random.rand(*np.shape(x)) + x
 #%%
 ###############################################################################
+"""
 times = np.zeros(12)
 c=0
 for i in np.array([-1., -1., -1., 0., 0., 0., 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]):
@@ -159,10 +160,10 @@ for i in np.array([-1., -1., -1., 0., 0., 0., 0.1, 0.1, 0.1, 0.2, 0.2, 0.2]):
         c+=1
         
 print times.reshape((4,3))
-
-
 """
-for i in [np.round(BC2/2., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
+
+
+for i in [np.round(BC2/2. - BC2/32., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
     
     rekRinge = Ringe - 1
     qs0, mag0 = False, False
@@ -189,13 +190,13 @@ for i in [np.round(BC2/2., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4
         
         mag0real[:len(mag0)] = mag0
         print mag0real
-        mag0real = g(mag0real)
+        mag0real = g(mag0real, 0.1)
         print mag0real
         res = smr.groundState(qs0[0], qs0[1], qs0[2], i * dirNSky, t, DuD, qRoh, qRohErw, mag0real, dirNSky, uel, rekRinge + 1) # versucht 
         print restoinitialparam(res.x)
-#        smr.reswriter(res.x, t, i, rekRinge + 1)
+        smr.reswriter(res.x, t, i, rekRinge + 1)
         
-#        qs0, mag0 = smr.magLoader(i, t, rekRinge + 1)
+        qs0, mag0 = smr.magLoader(i, t, rekRinge + 1)
         
         rekRinge += 1
 
@@ -203,7 +204,7 @@ for i in [np.round(BC2/2., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4
         
     
 #    print qs0, "\n", mag0
-"""
+
 """ NONE EEFFECT BY USING PREVIOUS MAGNETIZATION? """
 """ CHECK WHETHER THE UNIQUE ENTRIE MESS SOMETHING UP! """
 

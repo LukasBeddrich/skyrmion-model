@@ -7,6 +7,13 @@ what_could_possibly_go_wrong.py
 #magnetization_calculator.py 
 #########################################
 
+#########################################
+#### folders ############################
+
+graphics/
+
+#########################################
+
 # Built application files
 *.apk
 *.ap_
