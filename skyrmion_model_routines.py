@@ -73,7 +73,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 2.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 3.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -434,7 +434,7 @@ def indexMap(kvec, qRoh, qRohErw, Q1, Q2):
 
     """
     IndexNewPosList = []
-    minpos = np.argmin([np.linalg.norm(kvec+q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # not entirely sure why a plus is needed here...
+    minpos = np.argmin([np.linalg.norm(kvec-q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # not entirely sure why a plus is needed here...
     
     IndexPosList = np.asarray([np.where(np.all(qRohErw == qRohErw[i], axis = 1))[0] for i in xrange(len(qRohErw))], dtype = np.uint8)
     temp = [np.where(np.all(qRohErw + qRohErw[minpos] == qRohErw[j], axis = 1))[0] for j in xrange(len(qRohErw))]
@@ -950,7 +950,7 @@ def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
             subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
             fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
 
-    return fM
+    return 2.*fM
 
 #------------------------------------------------------------------------------
 
@@ -1057,7 +1057,7 @@ def mCrossMatrix(mag, qRoh):
     """
     nQloc = len(qRoh)
     
-    mx = np.zeros((3*(nQ+1), 3*(nQ+1)), dtype = np.complex)
+    mx = np.zeros((3*(nQloc), 3*(nQloc)), dtype = np.complex)
     
     for b in xrange(nQloc):                                                    # nicht 100% sicher wegen nQloc
         for c in xrange(nQloc):
@@ -1067,8 +1067,8 @@ def mCrossMatrix(mag, qRoh):
                         
                         pos = positionAddQtoN(b,c, qRoh)
                         if pos != -1:
-                            mx[3*pos + i, 3*c + l] += LeviCivitaTensor(3)[i,j,l] * mag[b,j]
-                            
+                            mx[3*pos + i, 3*c + l] += LeviCivitaTensor(3)[j,i,l] * mag[b,j] # was (3)[i,j,l] before but due to difference in array building between mathematica and python...
+                            # not working!!!
     return mx
                 
 #------------------------------------------------------------------------------
@@ -1133,7 +1133,7 @@ def vis_n_x_system(qRoh, qRohErw):
         
     
     # new approach to initialize and plot the shifted system, I hope for deeper understanding
-    shiftvect = np.array([2.1, 1.3, 0.])
+    shiftvect = np.array([-1., 0., 0.])
     imap = indexMap(shiftvect, qRoh, qRohErw, Q1, Q2)
     
     # new coordinates of the normal system
@@ -1177,8 +1177,8 @@ def vis_n_x_system(qRoh, qRohErw):
 
 np.set_printoptions(threshold = 1000)
 
-qRoh = loadqInd(2.1); nQ = len(qRoh) - 1
-qRohErw = loadqInd(2.1, 4.); nQErw = len(qRohErw) - 1
+qRoh = loadqInd(qMax); nQ = len(qRoh) - 1
+qRohErw = loadqInd(qMax, 4.); nQErw = len(qRohErw) - 1
 
 Q1, Q2 = initQ(q1,q2, q3, dirNSky)
 
