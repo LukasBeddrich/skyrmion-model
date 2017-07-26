@@ -31,7 +31,7 @@ GENERAL COMMENTS:
 #######################     Basic Imports           ###########################
 ###############################################################################
 
-import numpy as np; np.set_printoptions(threshold = 50)
+import numpy as np; np.set_printoptions(threshold = 50, precision = 15)
 import matplotlib.pyplot as plt
 import os
 from copy import deepcopy
@@ -999,7 +999,50 @@ def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
     return:
                 vecs(ndarray):              transposed array of orthonormalized eigenvectors first orthonormalized eigvec = vecs[:,0]
     """
+    
     eigval, eigvec = np.linalg.eig(mCross)
+    eigval = np.imag(eigval)
+    eigvec = eigvec.T
+    eigvalcut = max(eigval) * maxcutoff
+    
+    inds = np.argsort(eigval)
+    eigval = eigval[inds]
+    eigvec = eigvec[inds]
+    
+    eigvecmax, eigvecmid, eigvecun = [], [], []
+    
+    for i in xrange(len(eigval)/2 - 1):
+        if np.abs(eigval[i]) < 0.01:
+            eigvecun.append(eigvec[i])
+            eigvecun.append(eigvec[-i-1])
+        elif np.abs(eigval[i]) >= eigvalcut:
+            eigvecmax.append(eigvec[i])
+            eigvecmax.append(eigvec[-i-1])
+        else:
+            eigvecmid.append(eigvec[i])
+            eigvecmid.append(eigvec[-i-1])
+    
+    """ So far working quite well! """
+    """ Need to understand what mathematica orthogonalization does """
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    eigval, eigvec = np.linalg.eig(mCross)
+    eigval = np.imag(eigval)
     eigvec = eigvec.T
     eigvalcut = max(eigval) * maxcutoff
     
@@ -1008,7 +1051,7 @@ def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
     for i in xrange(len(eigval)):
         if eigval[i] < 0.01:
             eigvecun.append(eigvec[i])
-        elif eigval[i] >= eigvalcut:
+        elif np.abs(eigval[i]) >= eigvalcut:
             eigvecmax.append(eigvec[i])
         else:
             eigvecmid.append(eigvec[i])
@@ -1046,7 +1089,8 @@ def positionAddQtoN(b, c, qRoh):
 
 def mCrossMatrix(mag, qRoh):
     """
-    calculates the crossMatrix
+    calculates the crossMatrix one needs to reverse the loops, compared to mathematica code
+    mathematica multi-loop statements work quite similar to listcomprehension!!!
     
     arguments:
                 mag(ndarray[mx3]):          full, complex magnetization
@@ -1055,19 +1099,20 @@ def mCrossMatrix(mag, qRoh):
     return:
                 mx(ndarray):                
     """
+    
     nQloc = len(qRoh)
     
     mx = np.zeros((3*(nQloc), 3*(nQloc)), dtype = np.complex)
     
-    for b in xrange(nQloc):                                                    # nicht 100% sicher wegen nQloc
-        for c in xrange(nQloc):
+    for l in xrange(3):
+        for j in xrange(3):
             for i in xrange(3):
-                for j in xrange(3):
-                    for l in xrange(3):
+                for c in xrange(nQloc):                                         # nicht 100% sicher wegen nQloc
+                    for b in xrange(nQloc):                                 
                         
                         pos = positionAddQtoN(b,c, qRoh)
                         if pos != -1:
-                            mx[3*pos + i, 3*c + l] += LeviCivitaTensor(3)[j,i,l] * mag[b,j] # was (3)[i,j,l] before but due to difference in array building between mathematica and python...
+                            mx[3*pos + i, 3*c + l] += LeviCivitaTensor(3)[i,j,l] * mag[b,j] # was (3)[i,j,l] before but due to difference in array building between mathematica and python...
                             # not working!!!
     return mx
                 

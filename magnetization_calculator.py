@@ -9,7 +9,7 @@ Created on Sat Jul 22 13:47:27 2017
 #######################     Basic Imports           ###########################
 ###############################################################################
 
-import numpy as np; np.set_printoptions(threshold = 50)
+import numpy as np; np.set_printoptions(threshold = 50, precision = 15)
 import matplotlib.pyplot as plt
 import os
 from copy import deepcopy
@@ -163,7 +163,7 @@ print times.reshape((4,3))
 """
 
 
-for i in [np.round(BC2/2. - BC2/32., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
+for i in [np.round(BC2/2. - BC2/16., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
     
     rekRinge = Ringe - 1
     qs0, mag0 = False, False
