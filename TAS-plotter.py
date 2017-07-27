@@ -97,6 +97,7 @@ def simpleplot(n):
     
     fpath = os.path.join(TASP_path, "tasp2017n003%i.dat" % n)    
     temp = np.genfromtxt(fpath, skip_header = 46, dtype = str)
+    title, cmd, par, dpar = open(fpath, "r").readlines()[13:17]
     
     ident = identifier(temp[0])
     d = temp[1:].astype(np.float)
@@ -105,11 +106,22 @@ def simpleplot(n):
     
     if len(varinds) == 1:
         
+        print title
         plt.figure(facecolor = "w")
+        plt.title(cmd)
         plt.errorbar(d[:,varinds], d[:,ident["CNTS"]]/d[:,ident["M1"]], d[:,ident["CNTS"]]/d[:,ident["M1"]] / np.sqrt(d[:,ident["CNTS"]]), marker = "o", mfc = "r", mec = "k", ls = "None", ecolor = "k")
         plt.show()
 
-
+    elif np.allclose(2.*d[varinds[0]], d[varinds[1]]):
+        
+        print title
+        plt.figure(facecolor = "w")
+        plt.title(cmd)
+        plt.errorbar(d[:,varinds[1]], d[:,ident["CNTS"]]/d[:,ident["M1"]], d[:,ident["CNTS"]]/d[:,ident["M1"]] / np.sqrt(d[:,ident["CNTS"]]), marker = "o", mfc = "r", mec = "k", ls = "None", ecolor = "k")
+        plt.show()
+        
+    elif bedingung:
+        pass
 
 
 
