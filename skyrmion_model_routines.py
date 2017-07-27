@@ -895,6 +895,9 @@ def g_ij(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD, B):
 def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     calculates the components of the fluctuation matrix.
+    !!! The j index might be absolutely bad, because of j not being recognized as imaginary number "i" !!!
+    !!! the ")" in gt11 right before newline and krondelta(i,j) closes, so the wrong thing is counted? !!!
+    !!! check the whole damn calculation !!!
     
     arguments:
                 n, nn(int):                 index in [0, len(qRoh)[
@@ -965,6 +968,46 @@ def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
         for nn in xrange(nQloc):
             subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
             fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
+
+    return 2.*fM
+    
+#------------------------------------------------------------------------------
+
+def fluctuationM_new(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    kvec = np.array([kx, ky, lz]) limited to 1. BZ
+    calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
+    
+    arguments:
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
+    
+    return:
+                fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
+                                            full, not shifted fluctuation matrix
+    """
+    
+    nQloc = len(qRoh)
+    
+    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
+    
+    
+    for j in (0,1,2):
+        for i in (0,1,2):
+            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for n in xrange(nQloc)] for nn in xrange(nQloc)], dtype = np.complex)
+            fM[3*i:3*i+nQloc, 3*j:3*j+nQloc] = deepcopy(subfM)
+    
+    """
+    for n in xrange(nQloc):
+        for nn in xrange(nQloc):
+            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
+            fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
+    """
 
     return 2.*fM
 
@@ -1233,5 +1276,14 @@ uel = unique_entries(Q)
 
 mag0real = buildmag0(uel)                                                       # keine komplexen zahlen! weniger speicher und ansonsten keine kompatibilität mit MINIMIZE
 #mag = initmarray2(uel, mag0, qRoh, qRohErw, Q1, Q2)
+
+"""
+magmaticapath = os.path.join(mag_path, "magmatica_R_3.out")
+q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
+magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
+Q1g, Q2g = initQ(q1g, q2g, q3g, dirNSky)
+Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
+m = initmarray(uel, magtoimag(magmatica), Qg)
+"""
 
 ###############################################################################
