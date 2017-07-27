@@ -105,6 +105,22 @@ t = -1000
 #######################   basic helping routines    ###########################
 ###############################################################################
 
+def chop(a, precision = 1e-14):
+    """
+    
+    """
+    if a.dtype == np.complex:
+        tempr = np.real(a)
+        tempi = np.imag(a)
+        
+        return np.where(np.abs(tempr) < precision, np.zeros(a.shape), tempr) + np.where(np.abs(tempi) < precision, np.zeros(a.shape), tempi)*1.j
+    elif a.dtype == np.float:
+        return np.where(np.abs(a) < precision, np.zeros(a.shape), a)
+    else:
+        pass                                                                    # raise error?!
+
+#------------------------------------------------------------------------------
+
 def radius(n,m):
     """
     Returns 2-norm of a vector n*Q1Start + m*Q2Start
@@ -1025,41 +1041,12 @@ def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
     """ So far working quite well! """
     """ Need to understand what mathematica orthogonalization does """
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    eigval, eigvec = np.linalg.eig(mCross)
-    eigval = np.imag(eigval)
-    eigvec = eigvec.T
-    eigvalcut = max(eigval) * maxcutoff
-    
-    eigvecmax, eigvecmid, eigvecun = [], [], []
-    
-    for i in xrange(len(eigval)):
-        if eigval[i] < 0.01:
-            eigvecun.append(eigvec[i])
-        elif np.abs(eigval[i]) >= eigvalcut:
-            eigvecmax.append(eigvec[i])
-        else:
-            eigvecmid.append(eigvec[i])
-            
     if retless:
-        return orth(np.asarray(eigvecmax)).T
+        return np.linalg.qr(np.asarray(eigvecmax).T)[0]
     else:
-        return orth(np.asarray(eigvecmax)).T, orth(np.asarray(eigvecmid)).T, orth(np.asarray(eigvecun)).T
+        return np.linalg.qr(np.asarray(eigvecmax).T)[0], np.linalg.qr(np.asarray(eigvecmid).T)[0], np.linalg.qr(np.asarray(eigvecun).T)[0]
+    
+    """ last 4 lines: summary of what i did in the console """
 
 ###############################################################################
 
@@ -1146,6 +1133,19 @@ def mCrossSel(mag, qRoh):
     """
     mx = mCrossMatrix(mag, qRoh)
     seleigvec = SelectedEigenvectors(mx)
+    
+    return np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), mx),seleigvec)
+
+#------------------------------------------------------------------------------
+
+def Inv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    fM = fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
+    seleigvec = SelectedEigenvectors(mCrossMatrix(mag, qRoh))
+    
+    return np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fM),seleigvec)
 
 ###############################################################################
 
