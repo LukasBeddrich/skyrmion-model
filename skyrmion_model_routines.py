@@ -36,7 +36,8 @@ import matplotlib.pyplot as plt
 import os
 from copy import deepcopy
 from scipy.optimize import minimize
-from scipy.linalg import orth
+from scipy.linalg import orth, eigvals
+from matplotlib import cm
 
 ###############################################################################
 
@@ -105,7 +106,7 @@ t = -1000
 #######################   basic helping routines    ###########################
 ###############################################################################
 
-def chop(a, precision = 1e-14):
+def chop(a, precision = 1e-11):
     """
     
     """
@@ -942,6 +943,56 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     
 #------------------------------------------------------------------------------
 
+def g_ij3(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    calculates the components of the fluctuation matrix.
+    !!! The j index might be absolutely bad, because of j not being recognized as imaginary number "i" !!!
+    !!! the ")" in gt11 right before newline and krondelta(i,j) closes, so the wrong thing is counted? !!!
+    !!! check the whole damn calculation !!!
+    
+    arguments:
+                n, nn(int):                 index in [0, len(qRoh)[
+                i, j(int):                  index in [0,2[
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
+    """
+    
+    kBZ = np.array([kx, ky, kz])
+    nQloc = len(qRoh)
+    
+    gt11 = 0.+0.j
+    gt12 = 0.+0.j
+    gt2 = 0.+0.j
+    gt3 = 0.+0.j
+    
+    if n == nn:
+        gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
+            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
+            * krondelta(i, j) - np.complex(0., 2.) * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
+    
+        if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
+            gt12 = DemN[i, j]
+        else:
+            gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
+        
+    for a1 in xrange(nQloc):
+        ind = checkVecSum(qRoh, a1, n, nn)
+        try:
+            gt2 += np.dot(mag[a1], mag[ind])
+            gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
+        except IndexError:
+            pass
+            
+    return gt11 + DuD/2. * gt12 + 2 * krondelta(i, j) * gt2 + 4 * gt3
+    
+    
+#------------------------------------------------------------------------------
+
 def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     kvec = np.array([kx, ky, lz]) limited to 1. BZ
@@ -1177,18 +1228,39 @@ def mCrossSel(mag, qRoh):
     mx = mCrossMatrix(mag, qRoh)
     seleigvec = SelectedEigenvectors(mx)
     
-    return np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), mx),seleigvec)
+    return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), mx),seleigvec))
 
 #------------------------------------------------------------------------------
 
-def Inv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+def chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     
     """
     fM = fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
     seleigvec = SelectedEigenvectors(mCrossMatrix(mag, qRoh))
     
-    return np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fM),seleigvec)
+    return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fM),seleigvec))
+
+#------------------------------------------------------------------------------
+
+def chiInvFullSel(eps, mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    return 1.j * eps * np.linalg.inv(mCrossSel(mag, qRoh) + chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD))
+    
+###############################################################################
+
+###############################################################################
+#####################     Energy Spectrum     #################################
+###############################################################################
+
+def energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    temp = np.real(1.j * eigvals(np.dot(mCrossSel(mag, qRoh), chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD))))
+    return np.sort(temp[np.where(temp > 0)[0]])
 
 ###############################################################################
 
@@ -1255,6 +1327,21 @@ def vis_n_x_system(qRoh, qRohErw):
     for i in xrange(nQ + 1):
 #        plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(np.round(np.abs(np.linalg.norm(qq_qRoh[i] - q(34, qRoh, qRohErw, Q1, Q2))),3)), color = "blue", fontsize = 7.)
         plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(qstr[i][0]), color = "blue", fontsize = 7.)
+
+#------------------------------------------------------------------------------
+
+def disp(k, specs):
+    """
+    plotting first disp-rel
+    k: 1D arrays
+    specs: 2D array, multiple branches for at each k
+    """
+    c = cm.hot(np.linspace(0, 255, 17, dtype = np.uint8))
+    fig = plt.figure(facecolor = "w", figsize = (6,8))
+    plt.ylabel(r"$\hbar \omega$ [arb.u.]")
+    plt.xlabel(r"(k,0,0) [arb.u.]")
+    for i in xrange(len(specs[0,:])):
+        plt.plot(k, specs[:,i], marker = "o", mfc = tuple(c[i]), mec = "k", ls = "-", color = tuple(c[i]))
     
 ###############################################################################
 ###############################################################################
@@ -1277,13 +1364,13 @@ uel = unique_entries(Q)
 mag0real = buildmag0(uel)                                                       # keine komplexen zahlen! weniger speicher und ansonsten keine kompatibilität mit MINIMIZE
 #mag = initmarray2(uel, mag0, qRoh, qRohErw, Q1, Q2)
 
-"""
+
 magmaticapath = os.path.join(mag_path, "magmatica_R_3.out")
 q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
 magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
 Q1g, Q2g = initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = initmarray(uel, magtoimag(magmatica), Qg)
-"""
+
 
 ###############################################################################
