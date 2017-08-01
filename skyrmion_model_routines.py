@@ -408,7 +408,7 @@ def initmarray(uel, mag0, Q):
 
 #------------------------------------------------------------------------------
 
-def magLoader(B, T, Ringe):
+def magLoader(B, T, Ringe, mathematica = "False"):
     """
     Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.) and # of rings used
     
@@ -427,7 +427,10 @@ def magLoader(B, T, Ringe):
 
     searchB = round(B, 3)
     
-    d = np.genfromtxt(os.path.join(path, "B_%s,T_%s,R_%i.out" %(str(searchB), str(T), Ringe)), delimiter = ",")
+    if mathematica:
+        d = np.genfromtxt(os.path.join(path, "magmatica,Bfrac_%s,T_%s,R_%i.out" %(str(B), str(T), Ringe)))
+    else:
+        d = np.genfromtxt(os.path.join(path, "B_%s,T_%s,R_%i.out" %(str(searchB), str(T), Ringe)), delimiter = ",")
     return d[0], d[1:]
 
 #------------------------------------------------------------------------------
@@ -943,56 +946,6 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     
 #------------------------------------------------------------------------------
 
-def g_ij3(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
-    """
-    calculates the components of the fluctuation matrix.
-    !!! The j index might be absolutely bad, because of j not being recognized as imaginary number "i" !!!
-    !!! the ")" in gt11 right before newline and krondelta(i,j) closes, so the wrong thing is counted? !!!
-    !!! check the whole damn calculation !!!
-    
-    arguments:
-                n, nn(int):                 index in [0, len(qRoh)[
-                i, j(int):                  index in [0,2[
-                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
-                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
-                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
-                Q(ndarray[mx3]):            hex lattice vectors in groundState
-                q1, q2, q3(float):          components of Q1 after minimization process
-                t(float):                   temperature (somehow)
-                DuD(float):                 Dipole interaction strength
-    """
-    
-    kBZ = np.array([kx, ky, kz])
-    nQloc = len(qRoh)
-    
-    gt11 = 0.+0.j
-    gt12 = 0.+0.j
-    gt2 = 0.+0.j
-    gt3 = 0.+0.j
-    
-    if n == nn:
-        gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
-            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
-            * krondelta(i, j) - np.complex(0., 2.) * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
-    
-        if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
-            gt12 = DemN[i, j]
-        else:
-            gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
-        
-    for a1 in xrange(nQloc):
-        ind = checkVecSum(qRoh, a1, n, nn)
-        try:
-            gt2 += np.dot(mag[a1], mag[ind])
-            gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
-        except IndexError:
-            pass
-            
-    return gt11 + DuD/2. * gt12 + 2 * krondelta(i, j) * gt2 + 4 * gt3
-    
-    
-#------------------------------------------------------------------------------
-
 def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     kvec = np.array([kx, ky, lz]) limited to 1. BZ
@@ -1010,37 +963,9 @@ def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     return:
                 fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
                                             full, not shifted fluctuation matrix
-    """
-    
-    nQloc = len(qRoh)
-    
-    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
-    for n in xrange(nQloc):
-        for nn in xrange(nQloc):
-            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
-            fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
-
-    return 2.*fM
-    
-#------------------------------------------------------------------------------
-
-def fluctuationM_new(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
-    """
-    kvec = np.array([kx, ky, lz]) limited to 1. BZ
-    calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
-    
-    arguments:
-                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
-                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
-                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
-                Q(ndarray[mx3]):            hex lattice vectors in groundState
-                q1, q2, q3(float):          components of Q1 after minimization process
-                t(float):                   temperature (somehow)
-                DuD(float):                 Dipole interaction strength
-    
-    return:
-                fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
-                                            full, not shifted fluctuation matrix
+                                            
+    !!! INFO !!! I switched i and j to "j,i" in the call of g_ij2, better / "more accurate" would be to switch it in g_ij2 itself.
+                 because of symmetry properties of the fM matrix it is probably equivalent!
     """
     
     nQloc = len(qRoh)
@@ -1048,17 +973,11 @@ def fluctuationM_new(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
     
     
-    for j in (0,1,2):
-        for i in (0,1,2):
-            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for n in xrange(nQloc)] for nn in xrange(nQloc)], dtype = np.complex)
-            fM[3*i:3*i+nQloc, 3*j:3*j+nQloc] = deepcopy(subfM)
-    
-    """
     for n in xrange(nQloc):
         for nn in xrange(nQloc):
-            subfM = np.asarray([[g_ij2(n, nn, i, j, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
+            subfM = np.asarray([[g_ij2(n, nn, j, i, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
             fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
-    """
+    
 
     return 2.*fM
 
@@ -1247,7 +1166,7 @@ def chiInvFullSel(eps, mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     """
     
     """
-    return 1.j * eps * np.linalg.inv(mCrossSel(mag, qRoh) + chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD))
+    return 1.j * eps * np.linalg.inv(mCrossSel(mag, qRoh)) + chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
     
 ###############################################################################
 
@@ -1261,6 +1180,14 @@ def energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     """
     temp = np.real(1.j * eigvals(np.dot(mCrossSel(mag, qRoh), chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD))))
     return np.sort(temp[np.where(temp > 0)[0]])
+
+#------------------------------------------------------------------------------
+
+def EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borient, NuclearBragg, QVector, Kvector):
+    """
+    
+    """
+    pass
 
 ###############################################################################
 
@@ -1342,7 +1269,32 @@ def disp(k, specs):
     plt.xlabel(r"(k,0,0) [arb.u.]")
     for i in xrange(len(specs[0,:])):
         plt.plot(k, specs[:,i], marker = "o", mfc = tuple(c[i]), mec = "k", ls = "-", color = tuple(c[i]))
+
+#------------------------------------------------------------------------------
+
+def show_chInvfill(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
+    """
     
+    """
+    eps = np.arange(30,50)
+    xspec = energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD)
+    y = []
+    for i in eps:
+        y.append(np.sort(chop(eigvals(chiInvFullSel(i, mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD)))))
+    
+    y = np.asarray(y)
+    y2 = np.real(np.asarray([y[i,np.argsort(np.abs(y[i]))] for i in xrange(21)]))
+    plt.figure(facecolor = "w")
+    plt.plot(eps,y2[:,0], "b-")
+    plt.plot(xspec, [0 for j in xrange(len(xspec))], "ro", ls = "None", mec = "k")
+    plt.ylabel(r"$\chi^{-1}$ [arb.u.]")
+    plt.xlabel("frequency [arb.u.]")
+    plt.xlim(xmin = 0, xmax = 60)
+    plt.ylim(ymin = -1, ymax = 1)
+    
+    return y, xspec
+    
+
 ###############################################################################
 ###############################################################################
 
