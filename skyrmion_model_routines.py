@@ -354,6 +354,46 @@ def rot_vec(vec, axdir, angle):
     return np.dot(R, vec)
 
 #------------------------------------------------------------------------------
+#%%
+def skew_sym_mat(v):
+    """
+    gives the skew-symmetric cross-product matrix for v (in 3D)
+    """
+    tempm = np.zeros((3,3))
+    tempm[0,1] = -v[2]
+    tempm[1,0] = v[2]
+    tempm[0,2] = v[1]
+    tempm[2,0] = -v[1]
+    tempm[1,2] = -v[0]
+    tempm[2,1] = v[0]
+    return tempm
+
+#------------------------------------------------------------------------------
+#%%
+def find_rot_mat(vi, vf):
+    """
+    finds the rotation matrix to rotate vector vi in direction of vf
+    """
+    vin = vi/np.linalg.norm(vi)
+    vfn = vf/np.linalg.norm(vf)    
+    u = np.cross(vin, vfn)
+    
+    s = np.linalg.norm(u)
+    c = np.dot(vin, vfn)
+    ux = skew_sym_mat(u)
+    
+    if s != 0.:
+        return np.eye(3) + ux + np.dot(ux, ux) * (1.-c)/(s*s)
+    elif np.allclose(vin, vfn):
+        return np.eye(3)
+    elif np.allclose(vin, -vfn):
+        return -np.eye(3)
+    else:
+        print "Error"
+        return None
+
+#------------------------------------------------------------------------------
+#%%
 def magtoimag(mag0real):
     """
     returns the complex magnetization for high symmetry lattice points
@@ -1187,7 +1227,54 @@ def EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borien
     """
     
     """
-    pass
+    print "Start"
+    # The code uses a coordinate system where the magnetic field axis is along 001. RotB is the rotation matrix that rotates the magnetic field axis into 001
+    RotB = find_rot_mat(Borient, np.asarray([0.,0.,1.]))
+    
+    # Additionally, since cubic anisotropies are neglected, the Q - structure points in an arbitrary direction. 
+    # One now needs to rotate the system again to match a "real" Q - vector direction with the program - internal Q - direction, i.e. q[1]
+    QInternal = Qg[1]
+    nQInternal = np.linalg.norm(Qg[1])
+    RotQ = find_rot_mat(np.dot(RotB, QVector), QInternal)
+    
+    # ogether this forms the rotation matrix, that translates Vectors of the "real world" into program internal vectors
+    RotMat = np.dot(RotQ, RotB)
+    
+    # To make life easier, the entered Kvector is normalized to units of QVectors
+    Kvec = Kvector * nQInternal
+    KvecRotated = np.dot(RotMat, Kvec)
+    
+    # The nuclear Bragg vector in this coordinate system is then given by
+    NuclearBraggRotated = np.dot(RotMat, NuclearBragg/np.linalg.norm(NuclearBragg))
+    NuclearBraggRotated /= np.linalg.norm(NuclearBraggRotated)
+    print "Lab system transformed into theory system"
+    
+    NM = np.zeros((3*len(qRoh), 3*len(qRoh)))
+    
+    # normalized nuclear Bragg vector
+    NormGVector = np.concatenate((NuclearBraggRotated, np.zeros(3*(len(qRoh) - 1))))
+    
+    # calculate the energy spectrum at given kx,ky,kz
+    espec = energySpectrum(mag, qRoh, KvecRotated[0], KvecRotated[1], KvecRotated[2], Q, q1, q2, q3, t, DuD)
+    WeightEs = lambda i: np.linalg.eig(chiInvFullSel(espec[i], mag, qRoh, KvecRotated[0], KvecRotated[1], KvecRotated[2], Q, q1, q2, q3, t, DuD))
+    
+    # construct projection matrix that projects onto the first Brillouin zone and to the direction orthogonal to nuclear Bragg vector
+    ProjMatrix = deepcopy(NM)
+    ProjMatrix[:3,:3] = np.eye(3)
+    ProjMatrix -= np.outer(NormGVector, NormGVector)
+    
+    # contruct list with [energy, weight]
+    MxSel = mCrossSel(mag, qRoh)
+    SelEV = SelectedEigenvectors(mCrossMatrix(mag, qRoh))
+    EnergyWeight = []
+    for i in xrange(len(espec)):
+        WeightVal, WeightVec = WeightEs(i)
+        if WeightVal[-1] < 0.001:
+           tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SelEV, np.dot(np.outer(WeightVec[-1], np.conjugate(WeightVec[-1])), 1.j * MxSel)), np.conjugate(np.transpose(SelEV))))))
+           EnergyWeight.append([espec[i], tempw])
+        else:
+            print "Error!"
+            break
 
 ###############################################################################
 
