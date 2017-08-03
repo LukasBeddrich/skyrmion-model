@@ -121,7 +121,30 @@ def chop(a, precision = 1e-11):
         pass                                                                    # raise error?!
 
 #------------------------------------------------------------------------------
-
+#%%
+def chop2(a, precision = 1e-11):
+    """
+    
+    """
+    a = list(a)
+    for i in xrange(len(a)):
+        try:
+            a[i] = chop(a[i], precision)
+        except AttributeError:
+            print "not a numpy.ndarray! \n Probably not everything is chopped"
+    return a
+    """
+    aa = []
+    for i in a:
+        try:
+            aa.append(chop(i, precision))
+        except AttributeError:
+            print "not a numpy.ndarray! Probably not everything is chopped"
+            
+    return np.asarray(aa)
+    """
+#------------------------------------------------------------------------------
+#%%
 def radius(n,m):
     """
     Returns 2-norm of a vector n*Q1Start + m*Q2Start
@@ -1222,10 +1245,10 @@ def energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     return np.sort(temp[np.where(temp > 0)[0]])
 
 #------------------------------------------------------------------------------
-
-def EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borient, NuclearBragg, QVector, Kvector):
+#%%
+def EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, Kvector):
     """
-    
+    EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borient, NuclearBragg, QVector, Kvector)
     """
     print "Start"
     # The code uses a coordinate system where the magnetic field axis is along 001. RotB is the rotation matrix that rotates the magnetic field axis into 001
@@ -1268,14 +1291,17 @@ def EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borien
     SelEV = SelectedEigenvectors(mCrossMatrix(mag, qRoh))
     EnergyWeight = []
     for i in xrange(len(espec)):
-        WeightVal, WeightVec = WeightEs(i)
+        WeightVal, WeightVec = chop2(WeightEs(i))
+        inds = np.argsort(np.abs(WeightVal))[::-1]
+        WeightVal, WeightVec = WeightVal[inds], WeightVec[:,inds]
         if WeightVal[-1] < 0.001:
-           tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SelEV, np.dot(np.outer(WeightVec[-1], np.conjugate(WeightVec[-1])), 1.j * MxSel)), np.conjugate(np.transpose(SelEV))))))
+           tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SelEV, np.dot(np.outer(WeightVec[:,-1], np.conjugate(WeightVec[:,-1])), 1.j * MxSel)), np.conjugate(np.transpose(SelEV))))))
            EnergyWeight.append([espec[i], tempw])
         else:
             print "Error!"
             break
-
+    return EnergyWeight
+#%%
 ###############################################################################
 
 ###############################################################################
@@ -1381,14 +1407,45 @@ def show_chInvfill(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     
     return y, xspec
     
+#------------------------------------------------------------------------------
+#%%
+def vis_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    Borient = np.array([0,0,1])
+    NuclearBragg = np.array([1,1,0])
+    QVector = np.array([1,1,0])
+    Kvector = np.array([1,1,0])/np.sqrt(2)#*0.15
+    
+    EW = []
+    ks = np.linspace(-1.999,2.001, 41)
+    
+    for dk in ks:
+        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, dk*Kvector))
+    
+    return EW, ks
 
+    hbar_omega = np.transpose(np.asarray(EW)[:,0])
+    weights = np.transpose(np.asarray(EW)[:,1])
+    
+    wmax, wmin = np.max(weights), np.min(weights)
+    ms = lambda w: 70. * ((w-wmin)/(wmax-wmin)) + 20.
+    c = cm.plasma(np.linspace(0, 255, weights.shape[0], dtype = np.uint8))
+    
+    fig = plt.figure()
+    for i in xrange(len(hbar_omega)):    
+        plt.scatter(ks, hbar_omega[i], s = ms(weights[i]), c = tuple(c[i]), marker = "o", alpha = 0.75)
+    plt.ylabel(r"$\hbar \omega$ [arb.u.]")
+    plt.xlabel(r"(k,k,0) [arb.u.]")
+    plt.title("Dispersion relation | weight indicated by dot size", fontsize = 17.)
 ###############################################################################
 ###############################################################################
 
 ###############################################################################
 #####################   PLAYGROUND / PROGRAMM   ###############################
 ###############################################################################
-
+#%%
 np.set_printoptions(threshold = 1000)
 
 qRoh = loadqInd(qMax); nQ = len(qRoh) - 1
