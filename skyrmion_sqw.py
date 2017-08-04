@@ -16,7 +16,7 @@ from numpy import array	# in global namespace so that Takin can access it
 
 import scipy as sp
 import scipy.constants as const
-
+import Skyrmion
 
 
 # -----------------------------------------------------------------------------

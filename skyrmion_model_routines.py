@@ -14,7 +14,7 @@ Created on Tue Jul 11 15:21:16 2017
 """
 
 GENERAL COMMENTS:
-    - is my set-up for the initial magnetization arrangement really correct??? --> CHECK!!
+- optimize computation time
 
 """
 
@@ -1300,8 +1300,13 @@ def EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg
         else:
             print "Error!"
             break
-    return EnergyWeight
+    return np.array(EnergyWeight)
+
+#------------------------------------------------------------------------------
 #%%
+def write_EW(EW, ks, B, T, Kvector, QVector):
+    pass
+
 ###############################################################################
 
 ###############################################################################
@@ -1409,36 +1414,24 @@ def show_chInvfill(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     
 #------------------------------------------------------------------------------
 #%%
-def vis_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
+def vis_disp_weight(EW, ks):
     """
     
     """
-    Borient = np.array([0,0,1])
-    NuclearBragg = np.array([1,1,0])
-    QVector = np.array([1,1,0])
-    Kvector = np.array([1,1,0])/np.sqrt(2)#*0.15
-    
-    EW = []
-    ks = np.linspace(-1.999,2.001, 41)
-    
-    for dk in ks:
-        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, dk*Kvector))
-    
-    return EW, ks
-
-    hbar_omega = np.transpose(np.asarray(EW)[:,0])
-    weights = np.transpose(np.asarray(EW)[:,1])
+    hbar_omega = np.transpose(np.asarray(EW)[:,:,0]/45.2919)
+    weights = np.transpose(np.asarray(EW)[:,:,1])
     
     wmax, wmin = np.max(weights), np.min(weights)
-    ms = lambda w: 70. * ((w-wmin)/(wmax-wmin)) + 20.
+    ms = lambda w: 80. * (w-wmin)/(wmax-wmin) + 1.
     c = cm.plasma(np.linspace(0, 255, weights.shape[0], dtype = np.uint8))
     
     fig = plt.figure()
     for i in xrange(len(hbar_omega)):    
         plt.scatter(ks, hbar_omega[i], s = ms(weights[i]), c = tuple(c[i]), marker = "o", alpha = 0.75)
-    plt.ylabel(r"$\hbar \omega$ [arb.u.]")
-    plt.xlabel(r"(k,k,0) [arb.u.]")
+    plt.ylabel(r"$\hbar \omega$ [arb.u.]", fontsize = 13.)
+    plt.xlabel(r"(0,0,k) [arb.u.]", fontsize = 13.)
     plt.title("Dispersion relation | weight indicated by dot size", fontsize = 17.)
+    
 ###############################################################################
 ###############################################################################
 
@@ -1468,5 +1461,23 @@ Q1g, Q2g = initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = initmarray(uel, magtoimag(magmatica), Qg)
 
+#------------------------------------------------------------------------------
+
+def calc_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    Borient = np.array([0,0,1])
+    NuclearBragg = np.array([1,1,0])
+    QVector = np.array([1,1,0])
+    Kvector = np.array([1,1,0])/np.sqrt(2)#*0.15
+    
+    EW = []
+    ks = np.linspace(-0.999,1.001, 21)
+    
+    for dk in ks:
+        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, dk* np.array([-1,1,0]) + Kvector))
+    
+    return EW, ks
 
 ###############################################################################
