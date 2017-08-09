@@ -817,7 +817,7 @@ def MatBaseTrafo2(mat, kvec, qRoh, qRohErw, Q1, Q2):
     DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
     
     arguments:
-                vec(mod3(len(vec))=0):      vector to be transformed
+                tempfullm(ndarray):         vector to be transformed
                 kvec(ndarrray[3?]):         K-vector (also neg. possible)
                 qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
                 qRohErw(ndarray[nx2]):      
@@ -1124,6 +1124,52 @@ def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
     
     """ last 4 lines: summary of what i did in the console """
 
+#------------------------------------------------------------------------------
+    
+def SelectedEigenvectorsFalt(mCrossFalt, kvec, maxcutoff = 0.995, retless = True):
+    """
+    Does what "SelectedEigenvectors", "MidSelectedEigenvectors", "UnSelectedEigenvectors" at once.
+    Should do the trick for mCross as well as mCrossFalt
+    
+    arguments:
+                mCross(ndarray):            mCross matrix of the magnetization
+                maxcutoff(float):           selects the usefull eigenvectors, -values
+                retless(bool):              True -> returns only usefull
+    return:
+                vecs(ndarray):              transposed array of orthonormalized eigenvectors first orthonormalized eigvec = vecs[:,0]
+    """
+    
+    eigval, eigvec = np.linalg.eig(mCrossFalt)
+    eigval = np.imag(eigval)
+    eigvec = eigvec.T
+    eigvalcut = max(eigval) * maxcutoff
+    
+    inds = np.argsort(eigval)
+    eigval = eigval[inds]
+    eigvec = eigvec[inds]
+    
+    eigvecmax, eigvecmid, eigvecun = [], [], []
+    
+    for i in xrange(len(eigval)/2 - 1):
+        if np.abs(eigval[i]) < 0.01:
+            eigvecun.append(eigvec[i])
+            eigvecun.append(eigvec[-i-1])
+        elif np.abs(eigval[i]) >= eigvalcut:
+            eigvecmax.append(eigvec[i])
+            eigvecmax.append(eigvec[-i-1])
+        else:
+            eigvecmid.append(eigvec[i])
+            eigvecmid.append(eigvec[-i-1])
+    
+    """ So far working quite well! """
+    """ Need to understand what mathematica orthogonalization does """
+    
+    if retless:
+        return np.linalg.qr(np.asarray(eigvecmax).T)[0]
+    else:
+        return np.linalg.qr(np.asarray(eigvecmax).T)[0], np.linalg.qr(np.asarray(eigvecmid).T)[0], np.linalg.qr(np.asarray(eigvecun).T)[0]
+    
+    """ last 4 lines: summary of what i did in the console """
 ###############################################################################
 
 ###############################################################################
@@ -1429,7 +1475,7 @@ def vis_disp_weight(EW, ks):
     for i in xrange(len(hbar_omega)):    
         plt.scatter(ks, hbar_omega[i], s = ms(weights[i]), c = tuple(c[i]), marker = "o", alpha = 0.75)
     plt.ylabel(r"$\hbar \omega$ [arb.u.]", fontsize = 13.)
-    plt.xlabel(r"(0,0,k) [arb.u.]", fontsize = 13.)
+    plt.xlabel(r"(0,-k,0) [arb.u.]", fontsize = 13.)
     plt.title("Dispersion relation | weight indicated by dot size", fontsize = 17.)
     
 ###############################################################################
@@ -1462,21 +1508,21 @@ Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = initmarray(uel, magtoimag(magmatica), Qg)
 
 #------------------------------------------------------------------------------
-
+#%%
 def calc_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
     """
     
     """
     Borient = np.array([0,0,1])
     NuclearBragg = np.array([1,1,0])
-    QVector = np.array([1,1,0])
-    Kvector = np.array([1,1,0])/np.sqrt(2)#*0.15
+    QVector = np.array([0,1,0])
+    Kvector = np.array([0,-1,0])#/np.sqrt(2)#*0.15
     
     EW = []
-    ks = np.linspace(-0.999,1.001, 21)
+    ks = np.linspace(-0.199,0.201, 5)
     
     for dk in ks:
-        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, dk* np.array([-1,1,0]) + Kvector))
+        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, Kvector * dk))
     
     return EW, ks
 
