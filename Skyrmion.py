@@ -106,3 +106,17 @@ Qg = np.array([smr.q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = smr.initmarray(uel, smr.magtoimag(magmatica), Qg)
 
 ###############################################################################
+
+###############################################################################
+#######################        calculate Disp       ###########################
+###############################################################################
+
+Borient = np.array([0,0,1])
+NuclearBragg = np.array([1,1,0])
+QVector = np.array([1.,1.,0.])
+
+def disp_skyrmion(Kvector):
+    eEnergies, weights = smr.EnergyWeightsMagnons(m, qRoh, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
+    return eEnergies/BC2, weights
+
+###############################################################################
