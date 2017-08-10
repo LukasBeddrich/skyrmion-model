@@ -116,7 +116,7 @@ NuclearBragg = np.array([1,1,0])
 QVector = np.array([1.,1.,0.])
 
 def disp_skyrmion(Kvector):
-    eEnergies, weights = smr.EnergyWeightsMagnons(m, qRoh, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
+    eEnergies, weights = smr.EnergyWeightsMagnonsFalt(m, qRoh, qRohErw, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
     return eEnergies/BC2, weights
 
 ###############################################################################

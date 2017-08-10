@@ -1124,52 +1124,6 @@ def SelectedEigenvectors(mCross, maxcutoff = 0.995, retless = True):
     
     """ last 4 lines: summary of what i did in the console """
 
-#------------------------------------------------------------------------------
-    
-def SelectedEigenvectorsFalt(mCrossFalt, kvec, maxcutoff = 0.995, retless = True):
-    """
-    Does what "SelectedEigenvectors", "MidSelectedEigenvectors", "UnSelectedEigenvectors" at once.
-    Should do the trick for mCross as well as mCrossFalt
-    
-    arguments:
-                mCross(ndarray):            mCross matrix of the magnetization
-                maxcutoff(float):           selects the usefull eigenvectors, -values
-                retless(bool):              True -> returns only usefull
-    return:
-                vecs(ndarray):              transposed array of orthonormalized eigenvectors first orthonormalized eigvec = vecs[:,0]
-    """
-    
-    eigval, eigvec = np.linalg.eig(mCrossFalt)
-    eigval = np.imag(eigval)
-    eigvec = eigvec.T
-    eigvalcut = max(eigval) * maxcutoff
-    
-    inds = np.argsort(eigval)
-    eigval = eigval[inds]
-    eigvec = eigvec[inds]
-    
-    eigvecmax, eigvecmid, eigvecun = [], [], []
-    
-    for i in xrange(len(eigval)/2 - 1):
-        if np.abs(eigval[i]) < 0.01:
-            eigvecun.append(eigvec[i])
-            eigvecun.append(eigvec[-i-1])
-        elif np.abs(eigval[i]) >= eigvalcut:
-            eigvecmax.append(eigvec[i])
-            eigvecmax.append(eigvec[-i-1])
-        else:
-            eigvecmid.append(eigvec[i])
-            eigvecmid.append(eigvec[-i-1])
-    
-    """ So far working quite well! """
-    """ Need to understand what mathematica orthogonalization does """
-    
-    if retless:
-        return np.linalg.qr(np.asarray(eigvecmax).T)[0]
-    else:
-        return np.linalg.qr(np.asarray(eigvecmax).T)[0], np.linalg.qr(np.asarray(eigvecmid).T)[0], np.linalg.qr(np.asarray(eigvecun).T)[0]
-    
-    """ last 4 lines: summary of what i did in the console """
 ###############################################################################
 
 ###############################################################################
@@ -1260,6 +1214,20 @@ def mCrossSel(mag, qRoh):
 
 #------------------------------------------------------------------------------
 
+def mCrossSelFalt(mag, qRoh, qRohErw, kvec, Q1, Q2):
+    """
+    
+    arguments:
+                Q1(ndarray[1x3]):           Q1 of the optimized system
+                Q2(ndarray[1x3]):           Q2 of the optimized system
+    """
+    mxf = mCrossMatrixFalt(mag, qRoh, qRohErw, kvec, Q1, Q2)
+    seleigvecf = SelectedEigenvectors(mxf)
+    
+    return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvecf)), mxf),seleigvecf))
+
+#------------------------------------------------------------------------------
+
 def chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     
@@ -1268,6 +1236,16 @@ def chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     seleigvec = SelectedEigenvectors(mCrossMatrix(mag, qRoh))
     
     return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fM),seleigvec))
+#------------------------------------------------------------------------------
+
+def chiInv0SelFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    fMf = fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
+    seleigvec = SelectedEigenvectors(mCrossMatrixFalt(mag, qRoh, qRohErw, np.array([kx, ky, kz]), Q[3], Q[1]))
+    
+    return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fMf),seleigvec))
 
 #------------------------------------------------------------------------------
 
@@ -1276,7 +1254,16 @@ def chiInvFullSel(eps, mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     
     """
     return 1.j * eps * np.linalg.inv(mCrossSel(mag, qRoh)) + chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
+
+#------------------------------------------------------------------------------
+
+def chiInvFullSelFalt(eps, mag, qRoh, qRohErw, kx, ky, kz, Q, q1, q2, q3, t, DuD):
+    """
     
+    """
+    kvec = np.array([kx, ky, kz])
+    return 1.j * eps * np.linalg.inv(mCrossSelFalt(mag, qRoh, qRohErw, kvec, Q[3], Q[1])) + chiInv0SelFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD)
+
 ###############################################################################
 
 ###############################################################################
@@ -1288,6 +1275,15 @@ def energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     
     """
     temp = np.real(1.j * eigvals(np.dot(mCrossSel(mag, qRoh), chiInv0Sel(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD))))
+    return np.sort(temp[np.where(temp > 0)[0]])
+
+#------------------------------------------------------------------------------
+
+def energySpectrumFalt(mag, qRoh, qRohErw, kx, ky, kz, Q, q1, q2, q3, t, DuD):
+    """
+    
+    """
+    temp = np.real(1.j * eigvals(np.dot(mCrossSelFalt(mag, qRoh, qRohErw, np.array([kx,ky,kz]), Q[3], Q[1]), chiInv0SelFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD))))
     return np.sort(temp[np.where(temp > 0)[0]])
 
 #------------------------------------------------------------------------------
@@ -1348,6 +1344,63 @@ def EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg
             break
     return np.array(EnergyWeight)
 
+#------------------------------------------------------------------------------
+    
+def EnergyWeightsMagnonsFalt(mag, qRoh, qRohErw, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, Kvector):
+    """
+    EnergyWeightsMagnons(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD, B, Borient, NuclearBragg, QVector, Kvector)
+    """
+    print "Start"
+    # The code uses a coordinate system where the magnetic field axis is along 001. RotB is the rotation matrix that rotates the magnetic field axis into 001
+    RotB = find_rot_mat(Borient, np.asarray([0.,0.,1.]))
+    
+    # Additionally, since cubic anisotropies are neglected, the Q - structure points in an arbitrary direction. 
+    # One now needs to rotate the system again to match a "real" Q - vector direction with the program - internal Q - direction, i.e. q[1]
+    QInternal = Qg[1]
+    nQInternal = np.linalg.norm(Qg[1])
+    RotQ = find_rot_mat(np.dot(RotB, QVector), QInternal)
+    
+    # ogether this forms the rotation matrix, that translates Vectors of the "real world" into program internal vectors
+    RotMat = np.dot(RotQ, RotB)
+    
+    # To make life easier, the entered Kvector is normalized to units of QVectors
+    Kvec = Kvector * nQInternal
+    KvecRotated = np.dot(RotMat, Kvec)
+    
+    # The nuclear Bragg vector in this coordinate system is then given by
+    NuclearBraggRotated = np.dot(RotMat, NuclearBragg/np.linalg.norm(NuclearBragg))
+    NuclearBraggRotated /= np.linalg.norm(NuclearBraggRotated)
+    print "Lab system transformed into theory system"
+    
+    NM = np.zeros((3*len(qRohErw), 3*len(qRohErw)))
+    
+    # normalized nuclear Bragg vector
+    NormGVector = np.concatenate((NuclearBraggRotated, np.zeros(3*(len(qRohErw) - 1))))
+    
+    # calculate the energy spectrum at given kx,ky,kz
+    especf = energySpectrumFalt(mag, qRoh, qRohErw, KvecRotated[0], KvecRotated[1], KvecRotated[2], Q, q1, q2, q3, t, DuD)
+    WeightEs = lambda i: np.linalg.eig(chiInvFullSelFalt(especf[i], mag, qRoh, qRohErw, KvecRotated[0], KvecRotated[1], KvecRotated[2], Q, q1, q2, q3, t, DuD))
+    
+    # construct projection matrix that projects onto the first Brillouin zone and to the direction orthogonal to nuclear Bragg vector
+    ProjMatrix = deepcopy(NM)
+    ProjMatrix[:3,:3] = np.eye(3)
+    ProjMatrix -= np.outer(NormGVector, NormGVector)
+    
+    # contruct list with [energy, weight]
+    MxSelf = mCrossSelFalt(mag, qRoh, qRohErw, KvecRotated, Q[3], Q[1])
+    SelEVf = SelectedEigenvectors(mCrossMatrixFalt(mag, qRoh, qRohErw, KvecRotated, Q[3], Q[1]))
+    EnergyWeight = []
+    for i in xrange(len(especf)):
+        WeightVal, WeightVec = chop2(WeightEs(i))
+        inds = np.argsort(np.abs(WeightVal))[::-1]
+        WeightVal, WeightVec = WeightVal[inds], WeightVec[:,inds]
+        if WeightVal[-1] < 0.001:
+           tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SelEVf, np.dot(np.outer(WeightVec[:,-1], np.conjugate(WeightVec[:,-1])), 1.j * MxSelf)), np.conjugate(np.transpose(SelEVf))))))
+           EnergyWeight.append([especf[i], tempw])
+        else:
+            print "Error!"
+            break
+    return np.array(EnergyWeight)
 #------------------------------------------------------------------------------
 #%%
 def write_EW(EW, ks, B, T, Kvector, QVector):
@@ -1420,14 +1473,14 @@ def vis_n_x_system(qRoh, qRohErw):
         plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(qstr[i][0]), color = "blue", fontsize = 7.)
 
 #------------------------------------------------------------------------------
-
+#%%
 def disp(k, specs):
     """
     plotting first disp-rel
     k: 1D arrays
     specs: 2D array, multiple branches for at each k
     """
-    c = cm.hot(np.linspace(0, 255, 17, dtype = np.uint8))
+    c = cm.hot(np.linspace(0, 255, 15, dtype = np.uint8))
     fig = plt.figure(facecolor = "w", figsize = (6,8))
     plt.ylabel(r"$\hbar \omega$ [arb.u.]")
     plt.xlabel(r"(k,0,0) [arb.u.]")
@@ -1435,7 +1488,7 @@ def disp(k, specs):
         plt.plot(k, specs[:,i], marker = "o", mfc = tuple(c[i]), mec = "k", ls = "-", color = tuple(c[i]))
 
 #------------------------------------------------------------------------------
-
+#%%
 def show_chInvfill(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
     """
     
