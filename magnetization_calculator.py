@@ -80,7 +80,7 @@ Nz = 1./3
 DemN = np.array([[Nx, 0., 0.], [0., Ny, 0.], [0., 0., Nz]])
 
 DuD = 2 * 0.34
-t = -1000
+t = -10
 
 #------------------------------------------------------------------------------
 
@@ -163,7 +163,7 @@ print times.reshape((4,3))
 """
 
 
-for i in [np.round(BC2/2. - BC2/16., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
+for i in np.round([2.,4.],3):#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
     
     rekRinge = Ringe - 1
     qs0, mag0 = False, False
@@ -183,7 +183,7 @@ for i in [np.round(BC2/2. - BC2/16., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC
         if rekRinge < 2 and not qs0 and not mag0:                               # initialize for rings = 2 calc since no other magnetization was found
             qs0 = q1, q2, q3
             mag0 = mag0real
-            rekRinge = 2
+#            rekRinge = 2
             print "used regular startmag"
         
         t0 = time()
@@ -204,6 +204,10 @@ for i in [np.round(BC2/2. - BC2/16., 3)]:#np.round(np.linspace(BC2/2.-BC2/4., BC
         
     
 #    print qs0, "\n", mag0
+
+#for temp in [-10]:
+#    for B in [2.]:
+        
 
 """ NONE EEFFECT BY USING PREVIOUS MAGNETIZATION? """
 """ CHECK WHETHER THE UNIQUE ENTRIE MESS SOMETHING UP! """

@@ -471,7 +471,7 @@ def initmarray(uel, mag0, Q):
 
 #------------------------------------------------------------------------------
 
-def magLoader(B, T, Ringe, mathematica = "False"):
+def magLoader(B, T, Ringe, mathematica = False):
     """
     Loading previously caculated magnetization for specified T (arb.u.) and B (arb.u.) and # of rings used
     
