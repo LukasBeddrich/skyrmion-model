@@ -1428,24 +1428,38 @@ def create_EW_table(BC2, T, Ringe):
     """
     
     """
-    tablename = 'BC2=%f|T=%i|R=%i' % (BC2, T, Ringe)
+    tablename = 'R_%i' % Ringe
     conn = create_EW_connection()
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS ' + tablename + ' (Bfrac REAL, Borient TEXT, NuclearBragg TEXT, QVector TEXT, Kvector TEXT)')
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + tablename + ' (BC2 REAL, Bfrac REAL, T REAL, Borient TEXT, NuclearBragg TEXT, QVector TEXT, Kvector TEXT, Energy REAL, Weight REAL)')
+    conn.commit()
     cur.close()
     conn.close()
     
 #------------------------------------------------------------------------------
     
-def add_EW_to_table(BC2, T, Ringe, Bfrac, Borient, NulearBragg, QVector, Kvector, energies, weights):
+def vec_to_text(*args):
+    pass
+    
+#------------------------------------------------------------------------------
+def add_EW_to_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, Kvector, energies, weights):
     """
     
     """
-    tablename = 'BC2=%f|T=%i|R=%i' % (BC2, T, Ringe)
+    tablename = 'R_%i' % Ringe
+    delimiter = ','
     conn = create_EW_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO %s (Bfrac, Borient, NuclearBragg, QVector, Kvector) VALUES (?, ?, ?, ?, ?)", Bfrac, )
-    
+    if len(energies) == len(weights):
+        for i in xrange(len(energies)):
+            cur.execute("INSERT INTO %s (BC2, Bfrac, T, Borient, NuclearBragg, QVector, Kvector, Energy, Weight) VALUES (?,?,?,?,?,?,?,?,?)" % tablename,
+                        (np.round(BC2,3), Bfrac, T, delimiter.join(Borient.astype(str)), delimiter.join(NuclearBragg.astype(str)),
+                         delimiter.join(QVector.astype(str)), delimiter.join(Kvector.astype(str)), energies[i], weights[i]))
+            conn.commit()
+    else:
+        print "something went wrong. energies and weights need to have same number of values!"
+    cur.close()
+    conn.close()
 
 
 ###############################################################################
