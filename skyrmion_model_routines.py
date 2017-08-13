@@ -34,6 +34,7 @@ GENERAL COMMENTS:
 import numpy as np; np.set_printoptions(threshold = 50, precision = 15)
 import matplotlib.pyplot as plt
 import os
+import sqlite3
 from copy import deepcopy
 from scipy.optimize import minimize
 from scipy.linalg import orth, eigvals
@@ -1405,6 +1406,47 @@ def EnergyWeightsMagnonsFalt(mag, qRoh, qRohErw, Q, q1, q2, q3, t, DuD, Borient,
 #%%
 def write_EW(EW, ks, B, T, Kvector, QVector):
     pass
+
+###############################################################################
+
+###############################################################################
+#####################     data base methods     ###############################
+###############################################################################
+
+def create_EW_connection():
+    """
+    
+    """
+    
+    dbpath = os.path.join(package_path, 'EnergiesWeights.db')
+    conn = sqlite3.connect(dbpath)
+    return conn
+    
+#------------------------------------------------------------------------------
+    
+def create_EW_table(BC2, T, Ringe):
+    """
+    
+    """
+    tablename = 'BC2=%f|T=%i|R=%i' % (BC2, T, Ringe)
+    conn = create_EW_connection()
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + tablename + ' (Bfrac REAL, Borient TEXT, NuclearBragg TEXT, QVector TEXT, Kvector TEXT)')
+    cur.close()
+    conn.close()
+    
+#------------------------------------------------------------------------------
+    
+def add_EW_to_table(BC2, T, Ringe, Bfrac, Borient, NulearBragg, QVector, Kvector, energies, weights):
+    """
+    
+    """
+    tablename = 'BC2=%f|T=%i|R=%i' % (BC2, T, Ringe)
+    conn = create_EW_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO %s (Bfrac, Borient, NuclearBragg, QVector, Kvector) VALUES (?, ?, ?, ?, ?)", Bfrac, )
+    
+
 
 ###############################################################################
 
