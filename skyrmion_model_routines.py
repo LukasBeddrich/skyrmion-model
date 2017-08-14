@@ -1431,7 +1431,8 @@ def create_EW_table(BC2, T, Ringe):
     tablename = 'R_%i' % Ringe
     conn = create_EW_connection()
     cur = conn.cursor()
-    cur.execute('CREATE TABLE IF NOT EXISTS ' + tablename + ' (BC2 REAL, Bfrac REAL, T REAL, Borient TEXT, NuclearBragg TEXT, QVector TEXT, Kvector TEXT, Energy REAL, Weight REAL)')
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + tablename + ' (BC2 REAL, Bfrac REAL, T REAL, Borient TEXT, NuclearBragg TEXT, QVector1 REAL, QVector2 REAL, QVector3 REAL, \
+    Kvector1 REAL, Kvector2 REAL, Kvector3 REAL, Energy REAL, Weight REAL)')
     conn.commit()
     cur.close()
     conn.close()
@@ -1452,15 +1453,41 @@ def add_EW_to_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, Kvecto
     cur = conn.cursor()
     if len(energies) == len(weights):
         for i in xrange(len(energies)):
-            cur.execute("INSERT INTO %s (BC2, Bfrac, T, Borient, NuclearBragg, QVector, Kvector, Energy, Weight) VALUES (?,?,?,?,?,?,?,?,?)" % tablename,
+            cur.execute("INSERT INTO %s (BC2, Bfrac, T, Borient, NuclearBragg, QVector1, QVector2, QVector3, \
+						 Kvector1, Kvector2, Kvector3, Energy, Weight) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)" % tablename,
                         (np.round(BC2,3), Bfrac, T, delimiter.join(Borient.astype(str)), delimiter.join(NuclearBragg.astype(str)),
-                         delimiter.join(QVector.astype(str)), delimiter.join(Kvector.astype(str)), energies[i], weights[i]))
+                         QVector[0], QVector[1], QVector[2], Kvector[0], Kvector[1], Kvector[2], energies[i], weights[i]))
             conn.commit()
     else:
         print "something went wrong. energies and weights need to have same number of values!"
     cur.close()
     conn.close()
 
+#------------------------------------------------------------------------------
+
+def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, relQV, Kvector, relKv, energies, weights):
+	"""
+	
+	"""
+	tablename = 'R_%i' % Ringe
+	delimiter = ','
+	conn = create_EW_connection()
+	cur = conn.cursor()
+    
+	def veclim(QVec, Kvec, relQ, relK):
+		temp = np.concatenate((QVec*(1.-relQ), QVec*(1.+relQ), Kvec*(1.-relK), Kvec*(1.+relK)))
+		for i in xrange(len(temp)):
+			if temp[i] == 0 and (i + 1)%6 == 0:
+				temp[i] = min(relQ, relK)
+			elif temp[i] == 0 and (i+1)%3 == 0:
+				temp[i] = -min(relQ, relK)
+		return temp
+
+	QV1min, QV2min, QV3min, QV1max, QV2max, QV3max, Kv1min, Kv2min, Kv3min, Kv1max, Kv2max, Kv3max = veclim(QVector, Kvector, relQV, relKv)
+    
+	cur.execute('SELECT ENERGY, WEIGHT FROM %s WHERE BC2 == %f AND Bfrac == %f AND T == %f AND Borient == %s AND NuclearBragg == %s \
+				 AND QVector1 BETWEEN %f AND %f AND QVector2 BETWEEN %f AND %f AND QVector3 BETWEEN %f AND %f AND \
+				 Kvector1 BETWEEN %f AND %f AND Kvector2 BETWEEN %f AND %f AND Kvector3 BETWEEN %f AND %f' % (tablename, BC2, Bfrac, T, delimiter.join(Borient.astype(str)), delimiter.join(NuclearBragg.astype(str)), QV1min, QV1max, QV2min, QV2max, QV3min, QV3max, Kv1min, Kv1max, Kv2min, Kv2max, Kv3min, Kv3max))
 
 ###############################################################################
 
