@@ -52,7 +52,8 @@ mag_path = os.path.join(package_path, "mag_database")
 ############################################################################### # see page 5 
 #%%
 BC2 = 45.2919                                                                   # Bc2 as definded, without dipole interaction
-Bx, By, Bz = 0., 0., BC2/2.                                                       # right now arbitrary values, in units of T
+Bfrac = 0.5
+Bx, By, Bz = 0., 0., BC2*Bfrac                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
 B = np.linalg.norm(Bhom)                                                        # external Bfield in e3 dir
 dirNSky = Bhom/B
@@ -111,13 +112,21 @@ m = smr.initmarray(uel, smr.magtoimag(magmatica), Qg)
 #######################        calculate Disp       ###########################
 ###############################################################################
 
-Borient = np.array([0,0,1])
-NuclearBragg = np.array([1,1,0])
-QVector = np.array([1.,1.,0.])
+#Borient = np.array([0,0,1])
+#NuclearBragg = np.array([1,1,0])
+#QVector = np.array([1.,1.,0.])
 
-def disp_skyrmion(Kvector):
+def disp_skyrmion(Borient, NuclearBragg, QVector, Kvector):
+    """
     
-    eEnergies, weights = smr.EnergyWeightsMagnonsFalt(m, qRoh, qRohErw, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
+    """
+    try:
+        eEnergies, weights = smr.select_EW_from_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, 0.01, Kvector, 0.01).T
+        print 'Found values in database!'
+    except ValueError:
+        print 'No entries found in database. Calculation started!'
+        eEnergies, weights = smr.EnergyWeightsMagnonsFalt(m, qRoh, qRohErw, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
+        smr.add_EW_to_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector, eEnergies, weights)
     return eEnergies, weights
 
 ###############################################################################

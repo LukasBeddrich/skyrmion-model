@@ -8,7 +8,7 @@
 # @date jun-2016
 #
 
-import math as m
+import math as ma
 
 import numpy as np
 import numpy.linalg as la
@@ -67,10 +67,10 @@ def bose_cutoff(E, T, Ecut=0.02):
 # -----------------------------------------------------------------------------
 
 # global variables which can be accessed / changed by Takin
+g_Bo = np.array([0., 0., 1.])   # magnetic field orientation
+g_QSky = np.array([1. ,1. ,0.])  # Skyrmion Pinning direction
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
-g_D = 20.			# magnon stiffness
-g_offs = 0.			# energy gap
 g_sig = 0.02		# linewidth
 g_S0 = 1.			# intensity
 
@@ -102,7 +102,7 @@ def TakinDisp1(h,k,l):
 #    NuclearBragg = g_G
     try:
         Kvector = np.array([h, k, l])
-        eEnergies, weights = np.asarray(Skyrmion.disp_skyrmion(Kvector))
+        eEnergies, weights = np.asarray(Skyrmion.disp_skyrmion(g_Bo, g_G, g_QSky, Kvector))
         
     except ZeroDivisionError:
         return [0.,0.]
