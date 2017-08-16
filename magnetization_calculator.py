@@ -58,7 +58,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 4.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 3.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -163,7 +163,7 @@ print times.reshape((4,3))
 """
 
 
-for i in np.round([2.,4.],3):#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
+for i in np.round([4.50629/2],3):#np.round(np.linspace(BC2/2.-BC2/4., BC2/2.+BC2/4., 17), 3):
     
     rekRinge = Ringe - 1
     qs0, mag0 = False, False
