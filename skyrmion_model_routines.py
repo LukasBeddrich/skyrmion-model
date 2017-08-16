@@ -1071,6 +1071,7 @@ def fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     minpos = indexMap(kvec, qRoh, qRohErw, Q[3], Q[1])["minpos"]                # Q1 == Q[3] and Q2 == Q[1] is in this convention always true
     
     kBZ = kvec - Q[minpos]
+    print kBZ
     
     return MatBaseTrafo2(fluctuationM(kBZ[0], kBZ[1], kBZ[2], qRoh, mag, Q, q1, q2, q3, t, DuD), kvec, qRoh, qRohErw, Q[3], Q[1])
 
@@ -1299,8 +1300,8 @@ def EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg
     
     # Additionally, since cubic anisotropies are neglected, the Q - structure points in an arbitrary direction. 
     # One now needs to rotate the system again to match a "real" Q - vector direction with the program - internal Q - direction, i.e. q[1]
-    QInternal = Qg[1]
-    nQInternal = np.linalg.norm(Qg[1])
+    QInternal = Q[1]
+    nQInternal = np.linalg.norm(Q[1])
     RotQ = find_rot_mat(np.dot(RotB, QVector), QInternal)
     
     # ogether this forms the rotation matrix, that translates Vectors of the "real world" into program internal vectors
@@ -1357,8 +1358,8 @@ def EnergyWeightsMagnonsFalt(mag, qRoh, qRohErw, Q, q1, q2, q3, t, DuD, Borient,
     
     # Additionally, since cubic anisotropies are neglected, the Q - structure points in an arbitrary direction. 
     # One now needs to rotate the system again to match a "real" Q - vector direction with the program - internal Q - direction, i.e. q[1]
-    QInternal = Qg[1]
-    nQInternal = np.linalg.norm(Qg[1])
+    QInternal = Q[1]
+    nQInternal = np.linalg.norm(Q[1])
     RotQ = find_rot_mat(np.dot(RotB, QVector), QInternal)
     
     # ogether this forms the rotation matrix, that translates Vectors of the "real world" into program internal vectors
