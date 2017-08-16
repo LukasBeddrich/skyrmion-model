@@ -51,7 +51,7 @@ mag_path = os.path.join(package_path, "mag_database")
 #######################        init variables       ###########################
 ############################################################################### # see page 5 
 #%%
-BC2 = 45.2919                                                                   # Bc2 as definded, without dipole interaction
+BC2 = 3.18783                                                                   # Bc2 for T = -5  as definded, without dipole interaction
 Bfrac = 0.5
 Bx, By, Bz = 0., 0., BC2*Bfrac                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
@@ -83,7 +83,7 @@ Nz = 1./3
 DemN = np.array([[Nx, 0., 0.], [0., Ny, 0.], [0., 0., Nz]])
 
 DuD = 2 * 0.34                                                                  # Dipole interaction strength for  >> MnSi <<
-t = -1000
+t = -5
 
 #------------------------------------------------------------------------------
 
@@ -99,9 +99,12 @@ uel = smr.unique_entries(Q)
 mag0real = smr.buildmag0(uel)                                                       # keine komplexen zahlen! weniger speicher und ansonsten keine kompatibilität mit MINIMIZE
 #mag = initmarray2(uel, mag0, qRoh, qRohErw, Q1, Q2)
 
-magmaticapath = os.path.join(mag_path, "magmatica_R_3.out")
-q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
-magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
+#magmaticapath = os.path.join(mag_path, "magmatica_R_3.out")
+#q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
+#magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
+
+(q1g, q2g, q3g), magmatica = smr.magLoader(0.5, -5, 3, True)
+
 Q1g, Q2g = smr.initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([smr.q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = smr.initmarray(uel, smr.magtoimag(magmatica), Qg)
