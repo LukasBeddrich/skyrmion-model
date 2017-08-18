@@ -61,7 +61,7 @@ index_path = os.path.join(package_path, "index_files")
 mag_path = os.path.join(package_path, "mag_database")
 #%%
 ###############################################################################
-
+"""
 ###############################################################################
 #######################        init variables       ###########################
 ############################################################################### # see page 5 
@@ -102,7 +102,7 @@ t = -1000
 #------------------------------------------------------------------------------
 
 ###############################################################################
-
+"""
 ###############################################################################
 #######################   basic helping routines    ###########################
 ###############################################################################
@@ -1047,7 +1047,7 @@ def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
 
 #------------------------------------------------------------------------------
 
-def fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+def fluctuationMFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD):
     """
     kvec = np.array([kx, ky, lz]) not limited to 1. BZ any more
     calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
@@ -1071,7 +1071,7 @@ def fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     minpos = indexMap(kvec, qRoh, qRohErw, Q[3], Q[1])["minpos"]                # Q1 == Q[3] and Q2 == Q[1] is in this convention always true
     
     kBZ = kvec - Q[minpos]
-    print kBZ
+    print 'kBZ = ', kBZ
     
     return MatBaseTrafo2(fluctuationM(kBZ[0], kBZ[1], kBZ[2], qRoh, mag, Q, q1, q2, q3, t, DuD), kvec, qRoh, qRohErw, Q[3], Q[1])
 
@@ -1244,7 +1244,7 @@ def chiInv0SelFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD):
     """
     
     """
-    fMf = fluctuationMFalt(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD)
+    fMf = fluctuationMFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD)
     seleigvec = SelectedEigenvectors(mCrossMatrixFalt(mag, qRoh, qRohErw, np.array([kx, ky, kz]), Q[3], Q[1]))
     
     return chop(np.dot(np.dot(np.conjugate(np.transpose(seleigvec)), fMf),seleigvec))
@@ -1663,6 +1663,7 @@ def vis_disp_weight(EW, ks):
 #####################   PLAYGROUND / PROGRAMM   ###############################
 ###############################################################################
 #%%
+"""
 np.set_printoptions(threshold = 1000)
 
 qRoh = loadqInd(qMax); nQ = len(qRoh) - 1
@@ -1684,7 +1685,7 @@ magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
 Q1g, Q2g = initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = initmarray(uel, magtoimag(magmatica), Qg)
-
+"""
 #------------------------------------------------------------------------------
 #%%
 def calc_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
