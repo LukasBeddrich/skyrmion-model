@@ -51,7 +51,7 @@ mag_path = os.path.join(package_path, "mag_database")
 #######################        init variables       ###########################
 ############################################################################### # see page 5 
 #%%
-BC2 = 3.18783                                                                   # Bc2 for T = -5  as definded, without dipole interaction
+BC2 = 14.2467                                                                   # Bc2 for T = -100  as definded, without dipole interaction
 Bfrac = 0.5
 Bx, By, Bz = 0., 0., BC2*Bfrac                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
@@ -103,7 +103,7 @@ mag0real = smr.buildmag0(uel)                                                   
 #q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
 #magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
 
-(q1g, q2g, q3g), magmatica = smr.magLoader(0.5, -5, 3, True)
+(q1g, q2g, q3g), magmatica = smr.magLoader(0.5, -100, 3, True)
 
 Q1g, Q2g = smr.initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([smr.q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
