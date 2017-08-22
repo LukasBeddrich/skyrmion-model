@@ -94,7 +94,7 @@ def TakinInit():
 #
 # dispersion E(Q) and weight factor (optional)
 #
-def TakinDisp1(h,k,l):
+def TakinDisp(h,k,l):
     """
     
     """
@@ -116,7 +116,7 @@ def TakinDisp1(h,k,l):
 def TakinSqw(h, k, l, E):
     try:
 #		print("h={0}, k={1}, l={2}, E={3}".format(h,k,l,E))
-        [Ep_peak, Em_peak], [wp_peak, wm_peak] = TakinDisp1(h,k,l)
+        [Ep_peak, Em_peak], [wp_peak, wm_peak] = TakinDisp(h,k,l)
         
         S_p = np.sum([gauss(E, Ep_peak[i], g_sig, g_S0*wp_peak[i]) for i in xrange(len(Ep_peak))])
         S_m = np.sum([gauss(E, Em_peak[i], g_sig, g_S0*wm_peak[i]) for i in xrange(len(Em_peak))])
