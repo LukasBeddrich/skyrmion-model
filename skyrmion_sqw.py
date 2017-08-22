@@ -83,7 +83,7 @@ g_bose_cut = 0.02	# cutoff energy for Bose factor
 
 g_disp = 0			# which dispersion?
 
-
+g_Escale_emp = 1./30    # empiric estimate to fit the energy scale!
 #
 # the init function is called after Takin has changed a global variable (optional)
 #
