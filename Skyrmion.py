@@ -52,7 +52,7 @@ mag_path = os.path.join(package_path, "mag_database")
 ############################################################################### # see page 5 
 #%%
 BC2 = 14.2467                                                                   # Bc2 for T = -100  as definded, without dipole interaction
-Bfrac = 0.6
+Bfrac = 0.7
 Bx, By, Bz = 0., 0., BC2*Bfrac                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
 B = np.linalg.norm(Bhom)                                                        # external Bfield in e3 dir
