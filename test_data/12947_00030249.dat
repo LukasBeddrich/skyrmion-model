@@ -1,0 +1,381 @@
+### NICOS data file, created at 2017-05-29 16:33:44
+#                    number : 30249
+#                  filename : 12947_00030249.dat
+#                  filepath : /data/2017/12947/data/12947_00030249.dat
+#                      info : qcscan([1, 1, 0, 0], [0.005, 0, 0, 0], 10, 1)
+### Experiment information
+#                 Exp_users : Tobias Weber <tweber@frm2.tum.de> (Technische Universität München), M. Skoulatos, MLZ, J. Park, MLZ, B. Roessli, PSI, Switzerland, P. Böni, TUM E21
+#          Exp_localcontact : Robert Georgii <robert.georgii@frm2.tum.de>
+#                 Exp_title : Skyrmis in MnSi
+#              Exp_proposal : 12947
+#                Exp_remark : Suche Skyrmionen
+### Sample and alignment
+#         Sample_samplename : MnSi
+#            Sample_orient1 : (1.0, 0.0, 0.0)
+#             Sample_angles : (90.0, 90.0, 90.0) deg
+#             Sample_mosaic : 0.5 deg
+#         Sample_spacegroup : P2_13
+#               Sample_psi0 : 0.0 deg
+#            Sample_lattice : (4.550991473131377, 4.550991473131377, 4.550991473131377) A
+#            Sample_orient2 : (0.0, 1.0, 0.0)
+### Instrument setup
+#          mira_collimation : 
+#            mira_operators : ()
+#              mono_focmode : manual
+#            ana_vfocuspars : 0.0
+#             mira_facility : Heinz Maier-Leibnitz Zentrum Garching (MLZ)
+#                   B_alias : B_ccm2a
+#               mono_mosaic : 0.5 deg
+#           mono_vfocuspars : (220.528, -40.485, 2.789)
+#                  mira_doi : http://dx.doi.org/10.17815/jlsrf-1-21
+#         mira_axiscoupling : False
+#           mira_instrument : MIRA
+#                 mth_alias : m2th
+#                 mtt_alias : m2tt
+#      mira_scatteringsense : (-1, 1, -1)
+#                 mgx_alias : m2gx
+#                ana_dvalue : 3.355 A
+#                mono_order : 1
+#           mono_hfocuspars : 0.0
+#                ana_mosaic : 0.5 deg
+#                   T_alias : T_ccr21
+#                 mfv_alias : m2fv
+#             mira_scanmode : CKI
+#               ana_focmode : manual
+#          mira_responsible : Robert Georgii <robert.georgii@frm2.tum.de>
+#              ana_reltheta : False
+#               mono_dvalue : 3.355 A
+#                 ana_order : 1
+#                  Ts_alias : T_ccr21_B
+#            ana_hfocuspars : 0.0
+#             mono_reltheta : False
+#               mira_psi360 : False
+#                 mty_alias : m2ty
+#         mira_scanconstant : 1.4
+#              mira_website : http://www.mlz-garching.de
+#                 mtx_alias : m2tx
+#                 sth_alias : sth_st
+### Offsets
+#                sgy_offset : 0.00 deg
+#             sth_st_offset : 0.931 deg
+#                mty_offset : 0.00 mm
+#                mth_offset : -0.985 deg
+#                sgx_offset : 0.00 deg
+#                stx_offset : -0.04 mm
+#                stz_offset : 0.00 mm
+#               m2gx_offset : 0.00 deg
+#                ath_offset : 1.711 deg
+#                mgx_offset : 0.00 deg
+#                stt_offset : 0.239 deg
+#               m2tt_offset : -0.143 deg
+#      sth_newport02_offset : 0.000 deg
+#               m2th_offset : -0.985 deg
+#                sty_offset : 0.00 mm
+#               m2ty_offset : 0.00 mm
+#                sth_offset : 0.931 deg
+#                att_offset : -90.142 deg
+#                mtx_offset : 0.00 mm
+#                mtt_offset : -0.143 deg
+#               m2tx_offset : 0.00 mm
+### Limits
+#            att_userlimits : (-127.291, 120.109) deg
+#            stz_userlimits : (0.00, 40.00) mm
+#           mono_userlimits : (1.250, 1.600) A-1
+#           m2tt_userlimits : (-119.737, -19.857) deg
+#             ar_userlimits : (0.000, 250.000) mln/min
+#            sgx_userlimits : (-6.00, 6.00) deg
+#            mtx_userlimits : (-12.50, 10.00) mm
+#            stt_userlimits : (-5.239, 119.761) deg
+#            mtt_userlimits : (-119.737, -19.857) deg
+#            sgy_userlimits : (-6.00, 6.00) deg
+#   T_ccr21_tube_userlimits : (0.000, 300.000) K
+#         sth_st_userlimits : (-11.664, 28.336) deg
+#           m2th_userlimits : (-49.249, -29.249) deg
+#          DetHV_userlimits : (0, 950) V
+#            sth_userlimits : (-11.664, 28.336) deg
+#            ath_userlimits : (-359.844, 358.289) deg
+#              B_userlimits : (-2.200, 2.200) T
+#            ana_userlimits : (1.000, 3.000) A-1
+#  T_ccr21_stick_userlimits : (0.000, 325.000) K
+#            mfv_userlimits : (-360.0, 360.0) deg
+#        T_ccr21_userlimits : (0.000, 310.000) K
+#            mty_userlimits : (-15.00, 10.00) mm
+#            mgx_userlimits : (-1.00, 1.00) deg
+#            co2_userlimits : (0.000, 50.000) mln/min
+#        B_ccm2a_userlimits : (-2.200, 2.200) T
+#          MonHV_userlimits : (0, 500) V
+#           m2tx_userlimits : (-12.50, 10.00) mm
+#            sty_userlimits : (-25.00, 25.00) mm
+#           tbl2_userlimits : (-50.000, 50.000) deg
+#           tbl1_userlimits : (-360.000, 360.000) deg
+#            stx_userlimits : (-24.96, 25.00) mm
+#              T_userlimits : (0.000, 310.000) K
+#           m2ty_userlimits : (-15.00, 10.00) mm
+#           m2fv_userlimits : (-360.0, 360.0) deg
+#            mth_userlimits : (-49.249, -29.249) deg
+#           m2gx_userlimits : (-1.00, 1.00) deg
+#  sth_newport02_userlimits : (-100000000000.000, 100000000000.000) deg
+### Precisions/tolerances
+#             ath_precision : 0.005 deg
+#        co2_temp_precision : 0.000 degC
+#             sgy_precision : 0.01 deg
+#             mfv_precision : 0.5 deg
+#            tbl1_precision : 0.050 deg
+#             att_precision : 0.010 deg
+#             sgx_precision : 0.01 deg
+#             stt_precision : 0.002 deg
+#            m2fv_precision : 0.5 deg
+#             sty_precision : 0.01 mm
+#            m2tt_precision : 0.040 deg
+#             mtx_precision : 0.10 mm
+#            mono_precision : 0.001 A-1
+#            m2ty_precision : 0.10 mm
+#             PBe_precision : 0 mbar
+#             mtt_precision : 0.040 deg
+#             ana_precision : 0.000 A-1
+#             stx_precision : 0.01 mm
+#            m2tx_precision : 0.10 mm
+#            tbl2_precision : 0.050 deg
+#           MonHV_precision : 2 V
+#            m2gx_precision : 0.05 deg
+#             mgx_precision : 0.05 deg
+#         B_ccm2a_precision : 0.001 T
+#             mth_precision : 0.002 deg
+#             mty_precision : 0.10 mm
+#          sth_st_precision : 0.001 deg
+#   sth_newport02_precision : 0.010 deg
+#             TBe_precision : 0.0 K
+#             stz_precision : 0.10 mm
+#             sth_precision : 0.001 deg
+#               B_precision : 0.001 T
+#            m2th_precision : 0.002 deg
+#    T_ccr21_tube_precision : 0.100 K
+#           DetHV_precision : 0 V
+#   T_ccr21_stick_precision : 0.100 K
+#         ar_temp_precision : 0.000 C
+#            Pccr_precision : 0 mbar
+### Device status
+#           ccr21_p2_status : warn: warning, lower limit reached
+#            T_ccr21_status : ok: T_ccr21_tube=preselection reached
+#                mfv_status : ok: limit switch + active, motor halted
+# ccr21_vacuum_switch_status : ok: idle
+#      T_ccr21_stick_status : busy: moving
+#                ath_status : ok: motor halted
+#               mono_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted, focusv=limit switch + active, motor halted
+#                stz_status : ok: motor halted
+#                NL6_status : ok: idle
+#    ccr21_p2_limits_status : warn: warning, lower limit reached
+#                sth_status : ok: motor halted
+#          lamfilter_status : ok: ok
+#   ccr21_gas_switch_status : ok: idle
+#               m2gx_status : warn: motor halted, below user limit (-1.00 deg)
+#                stt_status : ok: limit switch - active, limit switch + active, motor halted
+#          T_ccr21_C_status : ok: idle
+#           det_fore_status : ok
+#              DetHV_status : ok: on
+#               m2th_status : ok: motor halted
+#             sth_st_status : ok: motor halted
+#               m2fv_status : ok: limit switch + active, motor halted
+#                PBe_status : ok: below sensor threshold
+#   ccr21_compressor_status : ok: idle
+#               mira_status : ok: mono=(theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted, focusv=limit switch + active, motor halted), ana=(theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted), phi=limit switch - active, limit switch + active, motor halted, psi=motor halted
+#                sgy_status : ok: motor halted
+#           ccm2a_TB_status : ok
+#                  T_status : ok: T_ccr21_tube=preselection reached
+#           stargate_status : ok
+#              flip2_status : ok: ok
+#            ar_temp_status : ok: ok
+#             ms2pos_status : ok: ok
+#    ccm2a_watertemp_status : ok: idle
+#   B_ccm2a_readback_status : ok: idle
+#               tbl2_status : ok: idle
+#                sgx_status : ok: motor halted
+#           ccm2a_TA_status : ok
+#              MonHV_status : ok: on
+#                 Ts_status : ok: idle
+#               m2tt_status : ok: limit switch - active, limit switch + active, motor halted
+#            B_ccm2a_status : ok: idle
+#            Shutter_status : ok
+#           ccr21_p1_status : ok: idle
+#                ss1_status : ok: left=idle, right=idle, bottom=idle, top=idle
+#                mtx_status : ok: motor halted
+#       T_ccr21_tube_status : ok: preselection reached
+#                att_status : ok: limit switch - active, limit switch + active, motor halted
+#                mty_status : ok: motor halted
+#           CoolTemp_status : ok
+#    ccr21_p1_limits_status : ok: idle
+#                 Ei_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted, focusv=limit switch + active, motor halted
+#            Cooling_status : ok: ok
+#          T_ccr21_D_status : ok: idle
+#                ana_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted
+#               Pccr_status : ok: below sensor threshold
+#                det_status : ok: timer=preselection reached, mon1=idle, mon2=idle, ctr1=idle
+#                  B_status : ok: idle
+#             atten2_status : ok: idle
+#           ccm2a_T2_status : ok
+#                mth_status : ok: motor halted
+#   ccm2a_compressor_status : ok: idle
+#          T_ccr21_A_status : ok: idle
+#               m2ty_status : ok: motor halted
+#           co2_temp_status : ok: ok
+#                TBe_status : ok
+#            Sixfold_status : ok: idle
+#             atten1_status : ok: idle
+#                stx_status : ok: motor halted
+#    ccm2a_waterflow_status : ok: idle
+#                ms2_status : ok: left=idle, right=idle, bottom=idle, top=idle
+#              Crane_status : ok: idle
+#           ccm2a_T1_status : ok
+#                mtt_status : ok: limit switch - active, limit switch + active, motor halted
+#               tbl1_status : ok: idle
+# ccr21_pressure_regulate_status : ok: idle
+#                ss2_status : ok: left=idle, right=idle, bottom=idle, top=idle
+#               m2tx_status : ok: motor halted
+#                 Ef_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted
+#                co2_status : ok: ok
+#          T_ccr21_B_status : ok: idle
+#              Space_status : ok: 852.77 GiB free
+#                sty_status : ok: motor halted
+#                 kf_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted
+#                 ar_status : ok: ok
+#                 ki_status : ok: theta=motor halted, twotheta=limit switch - active, limit switch + active, motor halted, focusv=limit switch + active, motor halted
+#       ReactorPower_status : ok: idle
+#             PSDGas_status : ok: ok
+#      sth_newport02_status : ok: idle
+#                mgx_status : warn: motor halted, below user limit (-1.00 deg)
+### Detector preset information
+#                det_preset : 1.0 s
+#                  det_mode : time
+### Device positions and sample environment state
+# T_ccr21_stick_controlchannel : B
+#                  Ei_value : 4.060 meV
+#                  Ef_value : 4.061 meV
+#    ccr21_gas_switch_value : off
+# T_ccr21_stick_heaterpower : 0.0 W
+#                 mth_value : -41.978 deg
+#                Pccr_value : 5e-09 mbar
+#              atten2_value : out
+#                m2tt_value : -83.968 deg
+#  T_ccr21_tube_heaterpower : 10.9 W
+#            T_ccr21_tube_p : 50.0
+#          T_regulationmode : tube
+#               flip2_value : out
+#               Space_value : 852.770 GiB
+#                 ms2_value : 0.00 0.00 10.00 30.00 mm
+#     ccr21_p1_limits_value : (0.0, 1000.0) mbar
+#       T_ccr21_tube_window : 60.0 s
+#                 mgx_value : -201.29 deg
+#             Cooling_value : okay
+#                   T_value : 28.502 K
+#                 ss1_value : (-4.00, 1.00) 14.00 x 32.00 mm
+# T_ccr21_tube_maxheaterpower : 100.0 W
+#                 sgx_value : -0.72 deg
+#     ccm2a_watertemp_value : 24.4 degC
+#        T_ccr21_tube_value : 28.502 K
+#     ccm2a_waterflow_value : 9.9 l/min
+# ccr21_pressure_regulate_value : off
+#                m2fv_value : -50.0 deg
+#                m2tx_value : -5.00 mm
+#                 ss2_value : (-3.00, 8.00) 16.00 x 36.00 mm
+#            stargate_value : [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0]
+#    ccr21_compressor_value : on
+#                 NL6_value : open
+# T_ccr21_tube_controlchannel : D
+#                mono_value : 1.400 A-1
+#              PSDGas_value : okay
+#                 sty_value : 0.00 mm
+#    T_ccr21_regulationmode : tube
+#                 stt_value : 85.704 deg
+#           T_ccr21_C_value : 13.380 K
+#              sth_st_value : -0.679 deg
+#            ccm2a_T1_value : 5.050 K
+#               Crane_value : 50.1 m
+#                 ana_value : 1.400 A-1
+#                 sth_value : -0.679 deg
+#       sth_newport02_value : 84.676 deg
+#                 sgy_value : -0.78 deg
+#                  ki_value : 1.400 A-1
+#                mira_value : [0.9499, 1.0000, 0.0000, -0.0010] rlu rlu rlu meV
+#            T_ccr21_tube_d : 0.0
+#            ccm2a_T2_value : 8.940 K
+#                   B_value : 0.089 T
+#                m2ty_value : 0.00 mm
+#                 PBe_value : 0.0005 mbar
+#               MonHV_value : 501 V
+#                 ath_value : -41.982 deg
+#                 stz_value : 16.02 mm
+#        ReactorPower_value : 20.0 MW
+#                 stx_value : 2.60 mm
+#             Sixfold_value : open
+#           T_ccr21_stick_d : 0.0
+# T_ccr21_stick_maxheaterpower : 49.9849 W
+#                  kf_value : 1.400 A-1
+#            det_fore_value : timer 1, mon1 0, mon2 10076, ctr1 3
+#                  Ts_value : 28.056 K
+#             T_ccr21_value : 28.502 K
+#     ccr21_p2_limits_value : (0.0, 1000.0) mbar
+#            T_ccr21_tube_i : 5.0
+#    T_ccr21_stick_setpoint : 0.0 K
+#       T_ccr21_stick_value : 28.057 K
+#           T_ccr21_D_value : 28.502 K
+#             Shutter_value : open
+#            ccm2a_TB_value : 15.440 K
+#                m2gx_value : -201.29 deg
+#                  ar_value : 100.043 mln/min
+#                 mfv_value : -50.0 deg
+#                 att_value : -83.956 deg
+#            CoolTemp_value : 17.9 degC
+#             ar_temp_value : 26.293 C
+#      T_ccr21_stick_window : 60.0 s
+#            ccm2a_TA_value : 15.940 K
+#                tbl1_value : -0.396 deg
+#            ccr21_p2_value : -0.125 mbar
+#                 mtx_value : -5.00 mm
+#                tbl2_value : 0.925 deg
+#                m2th_value : -41.978 deg
+#                T_setpoint : 28.5 K
+#           T_ccr21_B_value : 28.056 K
+#              atten1_value : out
+# ccr21_vacuum_switch_value : off
+#             B_ccm2a_value : 0.089 T
+#                 mtt_value : -83.968 deg
+#            co2_temp_value : 26.139 degC
+#    ccm2a_compressor_value : on
+#           T_ccr21_stick_p : 50.0
+#                 co2_value : 16.990 mln/min
+#     T_ccr21_tube_setpoint : 28.5 K
+#           T_ccr21_A_value : 28.216 K
+#            ccr21_p1_value : 101 mbar
+#              ms2pos_value : in
+#                 TBe_value : 35.1 K
+#          T_ccr21_setpoint : 28.5 K
+#           T_ccr21_stick_i : 20.0
+#           lamfilter_value : in
+#               DetHV_value : 851 V
+#                 mty_value : 0.00 mm
+#    B_ccm2a_readback_value : 0.09 T
+### Scan data
+# h	k	l	E	mono	ana	sth	stt	timer	mon1	mon2	ctr1
+# rlu	rlu	rlu	meV	A-1	A-1	deg	deg	s	-	cts	cts
+0.9499	1.0000	0.0000	-0.0010	1.400	1.400	-0.679	85.704	1.00	0	9985	2
+0.9549	1.0000	0.0000	-0.0010	1.400	1.400	-0.696	85.970	1.00	0	10054	2
+0.9599	1.0000	0.0000	-0.0010	1.400	1.400	-0.712	86.236	1.00	0	9950	7
+0.9649	1.0000	0.0000	-0.0010	1.400	1.400	-0.726	86.506	1.00	0	9952	5
+0.9698	1.0000	0.0000	-0.0010	1.400	1.400	-0.739	86.774	1.00	0	9875	7
+0.9749	1.0000	0.0000	-0.0010	1.400	1.400	-0.751	87.048	1.00	0	10035	11
+0.9799	1.0000	0.0000	-0.0010	1.400	1.400	-0.761	87.319	1.00	0	10149	17
+0.9849	1.0000	0.0000	-0.0010	1.400	1.400	-0.769	87.594	1.00	0	9833	41
+0.9899	1.0000	0.0000	-0.0010	1.400	1.400	-0.777	87.870	1.00	0	9762	987
+0.9949	1.0000	0.0000	-0.0010	1.400	1.400	-0.782	88.145	1.00	0	10003	16146
+0.9999	1.0000	0.0000	-0.0010	1.400	1.400	-0.787	88.424	1.00	0	9919	35815
+1.0048	1.0000	0.0000	-0.0010	1.400	1.400	-0.790	88.702	1.00	0	9840	17762
+1.0099	1.0000	0.0000	-0.0010	1.400	1.400	-0.792	88.985	1.00	0	10237	1219
+1.0149	1.0000	0.0000	-0.0010	1.400	1.400	-0.793	89.265	1.00	0	10067	53
+1.0199	1.0000	0.0000	-0.0010	1.400	1.400	-0.793	89.550	1.00	0	9923	12
+1.0249	1.0000	0.0000	-0.0010	1.400	1.400	-0.790	89.835	1.00	0	10037	13
+1.0299	1.0000	0.0000	-0.0010	1.400	1.400	-0.786	90.120	1.00	0	10049	10
+1.0349	1.0000	0.0000	-0.0010	1.400	1.400	-0.781	90.409	1.00	0	10022	5
+1.0398	1.0000	0.0000	-0.0010	1.400	1.400	-0.774	90.696	1.00	0	10005	1
+1.0449	1.0000	0.0000	-0.0010	1.400	1.400	-0.766	90.989	1.00	0	10129	1
+1.0499	1.0000	0.0000	-0.0010	1.400	1.400	-0.757	91.279	1.00	0	10202	3
+### End of NICOS data file 12947_00030249.dat
