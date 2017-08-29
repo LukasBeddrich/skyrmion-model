@@ -21,6 +21,7 @@ Created on Sun Jul 23 19:56:48 2017
 import numpy as np; np.set_printoptions(threshold = 50)
 import matplotlib.pyplot as plt
 import os
+import re
 
 ###############################################################################
 
@@ -57,25 +58,70 @@ class TAS_measurement(object):
         print "Measurement %s is closed." % self.__fname
         
     def load_spec(self):
-        self._specdata = np.genfromtxt(os.path.join(self.__dpath, self.__fname))
-        
-    def load_params(self):
-        self._params = params
+        try:
+            self._specdata = np.genfromtxt(os.path.join(self.__dpath, self.__fname))
+        except IOError:
+            print 'The specified file was not found!'
         
 ###############################################################################
 
-class TAS_measurements_comb(TAS_measurement):
+class MIRAmeasurement(TAS_measurement):
     """
     
     """
+    def __init__(self, dpath, fname):
+        """ """
+        super(TAS_measurement, self).__init__(self, dpath, fname)
+        
+    def __del__(self):
+        """ """
+        super(TAS_measurement, self).__del__(self)
+        
+    def parse_metadata(self):
+        """ """
+        try:
+            f = open(os.path.join(self.__dpath, self.__fname))
+            metadict = {'timestamp' : str(f.readline()[-20:-1])}
+        except IOError:
+            print 'The specified file was not found!'
+        except:
+            print 'Unexpected error occured.'
+            raise
+        
+        for line in f:
+            l = TASMetadataStr(line)
+                
+    
 
 ###############################################################################
-"""
-class ParamConverter(object):
 
+class TASMetadataStr(str):
+    """
     
-    self.sth = "sth"
-"""
+    """
+    splitter = ':'
+    keys = r'\s+[\S]+\s+:'
+    status = r'\s[\S]+:'
+    sing_num = r'[0-9]*\.[0-9]*'
+    unit = r'\s[A-Z,a-z]+\n'
+    def _split(self):
+        return self.split(self.splitter)
+    
+    def conv_meta_dict_simp(self):
+        if self[0] == '#':
+            self._split()
+        
+    def basic_meta(self):
+        if self[0] == '#':
+            temp = self[1:-1].strip()._split()
+            if temp[1:] != str:
+                return {temp[0] : ':'.join(temp[1:])}
+            else:
+                print 'Shit!'
+        
+
+
+
 ###############################################################################
 
 def identifier(lstr):
@@ -124,12 +170,11 @@ def simpleplot(n):
         pass
 
 
-
-
-
-
-
-
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
 
 
 
