@@ -62,6 +62,12 @@ class TAS_measurement(object):
             self._specdata = np.genfromtxt(os.path.join(self.__dpath, self.__fname))
         except IOError:
             print 'The specified file was not found!'
+    
+    def get_full_spec(self):
+        try:
+            return self._specdata
+        except AttributeError:
+            print 'Spectrum probably not loaded!'
         
 ###############################################################################
 
@@ -69,29 +75,44 @@ class MIRAmeasurement(TAS_measurement):
     """
     
     """
-    def __init__(self, dpath, fname):
-        """ """
-        super(TAS_measurement, self).__init__(self, dpath, fname)
+#    def __init__(self, dpath, fname):
+#        """ """
+#        super(TAS_measurement, self).__init__()
         
-    def __del__(self):
-        """ """
-        super(TAS_measurement, self).__del__(self)
+#    def __del__(self):
+#        """ """
+#        super(TAS_measurement, self).__del__(self)
         
     def parse_metadata(self):
         """ """
+        dappends = []
         try:
             f = open(os.path.join(self.__dpath, self.__fname))
-            metadict = {'timestamp' : str(f.readline()[-20:-1])}
+            self._metadict = {'timestamp' : str(f.readline()[-20:-1])}
         except IOError:
             print 'The specified file was not found!'
         except:
             print 'Unexpected error occured.'
             raise
         
-        for line in f:
-            l = TASMetadataStr(line)
-                
+        lines = f.readlines()                                           # hardcoded metadata 'search'
+        dappends.append(tuple(lines[4][1:-1].strip().split(':')))       # scan info
+        dappends.append(tuple(lines[336][1:-1].strip().split(':')))     # sample temperature
+        dappends.append(tuple(lines[350][1:-1].strip().split(':')))     # setpoint sample temperature
+        dappends.append(tuple(lines[355][1:-1].strip().split(':')))     # B field at sample
+        dappends.append(tuple(lines[300][1:-1].strip().split(':')))     # set B-field
+        self._metadict.update(dappends)
     
+    def get_metadata(self, *args):
+        retdict = {}
+        for i in args:
+            try:
+                retdict.update((i, self._metadict[i]))
+            except KeyError:
+                print '%s is not a valid key' % str(i)
+            except AttributeError:
+                print 'Metadata has probably not been parsed, yet.'
+        return retdict
 
 ###############################################################################
 
