@@ -51,8 +51,8 @@ mag_path = os.path.join(package_path, "mag_database")
 #######################        init variables       ###########################
 ############################################################################### # see page 5 
 #%%
-BC2 = 42.9815                                                                   # Bc2 for T = -100  as definded, without dipole interaction
-Bfrac = 0.6
+BC2 = 45.2919                                                                   # Bc2 for T = -100  as definded, without dipole interaction
+Bfrac = 0.5
 Bx, By, Bz = 0., 0., BC2*Bfrac                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
 B = np.linalg.norm(Bhom)                                                        # external Bfield in e3 dir
@@ -61,7 +61,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 3.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 7.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -83,7 +83,7 @@ Nz = 1./3
 DemN = np.array([[Nx, 0., 0.], [0., Ny, 0.], [0., 0., Nz]])
 
 DuD = 2 * 0.34                                                                  # Dipole interaction strength for  >> MnSi <<
-t = -900
+t = -1000
 
 #------------------------------------------------------------------------------
 
@@ -103,7 +103,7 @@ mag0real = smr.buildmag0(uel)                                                   
 #q1g, q2g, q3g, = np.genfromtxt(magmaticapath, delimiter = ",")[0]
 #magmatica = np.genfromtxt(magmaticapath, delimiter = ",")[1:]
 
-(q1g, q2g, q3g), magmatica = smr.magLoader(Bfrac, t, 3, True)
+(q1g, q2g, q3g), magmatica = smr.magLoader(Bfrac, t, int(qMax), True)
 
 Q1g, Q2g = smr.initQ(q1g, q2g, q3g, dirNSky)
 Qg = np.array([smr.q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
