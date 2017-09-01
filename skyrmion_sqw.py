@@ -68,8 +68,8 @@ def bose_cutoff(E, T, Ecut=0.02):
 
 # global variables which can be accessed / changed by Takin
 g_Bo = np.array([0., 0., 1.])   # magnetic field orientation
-#g_QSky = np.array([np.cos(np.pi/6.) ,np.sin(np.pi/6.) ,0.])  # Skyrmion Pinning direction
-g_QSky = np.array([1., 1., 0.])
+g_QSky = np.array([np.cos(np.pi/6.) ,np.sin(np.pi/6.) ,0.])  # Skyrmion Pinning direction
+#g_QSky = np.array([1., 1., 0.])
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
 g_sig = 0.02		# linewidth
@@ -138,7 +138,9 @@ def TakinSqw(h, k, l, E):
 
 import os
 print("Script working directory: " + os.getcwd())
-print('')
+print('B-Field orientation: {}\n \
+      Nuclear Bragg Peak: {}\n \
+      Skyrmion Pinning: {}\n'.format(tuple(g_Bo), tuple(g_G), tuple(g_QSky)))
 
 # test
 #print(TakinSqw(1.1, 0.9, 0., 0.4))

@@ -61,7 +61,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 7.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 4.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
