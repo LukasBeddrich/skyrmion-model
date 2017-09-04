@@ -17,6 +17,7 @@ from numpy import array	# in global namespace so that Takin can access it
 import scipy as sp
 import scipy.constants as const
 import Skyrmion
+import energy_scale as es
 
 
 # -----------------------------------------------------------------------------
@@ -42,22 +43,35 @@ def gauss(x, x0, sig, amp):
 
 # Bose factor
 def bose(E, T):
-	n = 1./(m.exp(abs(E)/(kB*T)) - 1.)
+	n = 1./(np.exp(abs(E)/(kB*T)) - 1.)
 	if E >= 0.:
 		n += 1.
 	return n
 
 # Bose factor which is cut off below Ecut
 def bose_cutoff(E, T, Ecut=0.02):
-	Ecut = abs(Ecut)
+    Ecut = abs(Ecut)
 
-	if abs(E) < Ecut:
-		b = bose(np.sign(E)*Ecut, T)
-	else:
-		b = bose(E, T)
+    if abs(E) < Ecut and abs(E)!=0.:
+        b = bose(np.sign(E)*Ecut, T)
+    elif abs(E) == 0.:
+        b = bose(Ecut, T)
+    else:
+        b = bose(E, T)
+    return b
 
-	return b
+# convert rlu to k_h
+def rlutokh(h,k,l,g_G = (1., 1., 0.)):
+    """
+    
+    """
+    Q = np.asarray([h,k,l])
+    q = Q - g_G
+    qnorm = q/np.linalg.norm(q)
+    qvalinkh = np.sqrt(np.sum(q**2)) / 0.027
 
+    return qvalinkh, qnorm * qvalinkh
+    
 # -----------------------------------------------------------------------------
 
 
@@ -78,7 +92,7 @@ g_S0 = 1.			# intensity
 g_inc_sig = 0.02	# incoherent width
 g_inc_amp = 1.		# incoherent intensity
 
-g_T = 300.			# temperature
+g_T = 28.			# temperature
 
 g_bose_cut = 0.02	# cutoff energy for Bose factor
 
@@ -88,6 +102,8 @@ g_Escale_emp = 1./30    # empiric estimate to fit the energy scale!
 #
 # the init function is called after Takin has changed a global variable (optional)
 #
+
+
 def TakinInit():
 	print("Init: G=" + repr(g_G) + ", T=" + repr(g_T))
 
@@ -95,29 +111,37 @@ def TakinInit():
 #
 # dispersion E(Q) and weight factor (optional)
 #
-def TakinDisp(h,k,l):
+def TakinDisp1(h,k,l):
     """
     
     """
 #    Borient = np.array([0.,0.,1.])
 #    NuclearBragg = g_G
     try:
+        print 'Passing on h = {}, k = {}, l = {}'.format(h, k, l)
         Kvector = np.array([h, k, l])
+        print '{}'.format(Kvector)
+        escale = es.Escale(g_T)
         eEnergies, weights = np.asarray(Skyrmion.disp_skyrmion(g_Bo, g_G, g_QSky, Kvector))
         
     except ZeroDivisionError:
         return [0.,0.]
     
-    return [[eEnergies, -eEnergies], [weights, weights]]    
+    return [[eEnergies * escale, -eEnergies * escale], [weights, weights]]    
 
 
 #
 # S(Q,E) function, called for every Monte-Carlo point
 #
 def TakinSqw(h, k, l, E):
+    """
+    hkl in rlu --> transform to kh
+    """
+    hkl_intern = rlutokh(h,k,l,g_G)[1]
+    print 'tranfsformed (h,k,l) = {} into (h_int, k_int, l_int) = {}'.format((h, k, l), tuple(hkl_intern))
     try:
 #		print("h={0}, k={1}, l={2}, E={3}".format(h,k,l,E))
-        [Ep_peak, Em_peak], [wp_peak, wm_peak] = TakinDisp(h,k,l)
+        [Ep_peak, Em_peak], [wp_peak, wm_peak] = TakinDisp1(*hkl_intern)
         
         S_p = np.sum([gauss(E, Ep_peak[i], g_sig, g_S0*wp_peak[i]) for i in xrange(len(Ep_peak))])
         S_m = np.sum([gauss(E, Em_peak[i], g_sig, g_S0*wm_peak[i]) for i in xrange(len(Em_peak))])

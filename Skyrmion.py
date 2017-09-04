@@ -61,7 +61,7 @@ dirNSky = Bhom/B
 #------------------------------------------------------------------------------ # see page 6
 
 nMax = 300
-qMax = 4.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+qMax = 7.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
 
 #------------------------------------------------------------------------------ # see page 6
 
@@ -124,12 +124,14 @@ def disp_skyrmion(Borient, NuclearBragg, QVector, Kvector):
     
     """
     try:
+        print 'BC2 = {} \nT = {} \nrings = {} \nBfrac = {} \nBorient = {} \nNuclearbragg = {} \nQVector = {} \n\
+Kvector = {}'.format(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector)
         eEnergies, weights = smr.select_EW_from_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, 0.01, Kvector, 0.01).T
-        print 'Found values in database!'
+#        print 'Found values in database!'
     except ValueError:
         print 'No entries found in database. Calculation started!'
         eEnergies, weights = smr.EnergyWeightsMagnonsFalt(m, qRoh, qRohErw, Qg, q1g, q2g, q3g, t, DuD, Borient, NuclearBragg, QVector, Kvector).T
         smr.add_EW_to_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector, eEnergies, weights)
-    return eEnergies, weights
+    return eEnergies/BC2, weights
 
 ###############################################################################

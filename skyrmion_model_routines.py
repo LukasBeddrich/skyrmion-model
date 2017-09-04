@@ -1506,7 +1506,8 @@ def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, r
 #                       NuclearBragg[0], NuclearBragg[1], NuclearBragg[2],\
 #                       QV1min, QV1max, QV2min, QV2max, QV3min, QV3max,\
 #                       Kv1min, Kv1max, Kv2min, Kv2max, Kv3min, Kv3max))
-        
+        print 'QVmin = ({}, {}, {}) \nQVmax = ({}, {}, {}) \nKvmin = ({}, {}, {}) \nKvmax = ({}, {}, {})'.format(\
+                       *veclim(QVector, Kvector, relQV, relKv))
         cur.execute('SELECT Energy, Weight FROM %s WHERE BC2 == %f AND Bfrac == %f AND T == %f AND \
                     Borient1 == %f AND Borient2 == %f AND Borient3 == %f AND \
                     NuclearBragg1 == %f AND NuclearBragg2 == %f AND NuclearBragg3 == %f AND \
@@ -1517,13 +1518,14 @@ def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, r
                     NuclearBragg[0], NuclearBragg[1], NuclearBragg[2],\
                     QV1min, QV1max, QV2min, QV2max, QV3min, QV3max,\
                     Kv1min, Kv1max, Kv2min, Kv2max, Kv3min, Kv3max))
-        
+#        print 'marked data'
     except sqlite3.OperationalError:
         print 'Error during read out'
     except TypeError:
         print 'Error formatiing SQL Querry'
     finally:
         data = np.asarray(cur.fetchall())
+#        print 'returned data such as: {}'.format(data[0,:])
         cur.close()
         conn.close()
     
