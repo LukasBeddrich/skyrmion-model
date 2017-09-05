@@ -66,6 +66,7 @@ mag_path = os.path.join(package_path, "mag_database")
 #######################        init variables       ###########################
 ############################################################################### # see page 5 
 BC2 = 45.2919                                                                   # Bc2 as definded, without dipole interaction
+Bfrac = 0.5
 Bx, By, Bz = 0., 0., BC2/2.                                                       # right now arbitrary values, in units of T
 Bhom = np.array([Bx, By, Bz])
 B = np.linalg.norm(Bhom)                                                        # external Bfield in e3 dir
@@ -1008,6 +1009,57 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     
     
 #------------------------------------------------------------------------------
+
+def g_ij3(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    calculates the components of the fluctuation matrix.
+    !!! The j index might be absolutely bad, because of j not being recognized as imaginary number "i" !!!
+    !!! the ")" in gt11 right before newline and krondelta(i,j) closes, so the wrong thing is counted? !!!
+    !!! check the whole damn calculation !!!
+    
+    arguments:
+                n, nn(int):                 index in [0, len(qRoh)[
+                i, j(int):                  index in [0,2[
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
+    """
+    LCT = LeviCivitaTensor(3)
+    kBZ = np.array([kx, ky, kz])
+    nQloc = len(qRoh)
+    
+    gt11 = 0.
+    gt12 = 0.
+    gt2 = 0.
+    gt3 = 0.
+    
+    if n == nn:
+        gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
+            - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
+            * krondelta(i, j) - 2.j * np.dot(LCT[i,j], Q[n] + kBZ)
+    
+        if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
+            gt12 = DemN[i, j]
+        else:
+            gt12 = ((Q[n] + kBZ)[i] * (Q[n] + kBZ)[j])/np.dot(Q[n] + kBZ, Q[n] + kBZ)
+        
+    for a1 in xrange(nQloc):
+        ind = checkVecSum(qRoh, a1, n, nn)
+        try:
+            gt2 += np.dot(mag[a1], mag[ind])
+            gt3 += mag[a1, i] * mag[ind, j]             # why should I run the loop twice? -> calc both at same time
+        except IndexError:
+            pass
+            
+    return gt11 + DuD/2. * gt12 + 2 * krondelta(i, j) * gt2 + 4 * gt3
+    
+    
+#------------------------------------------------------------------------------
+
 
 def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
