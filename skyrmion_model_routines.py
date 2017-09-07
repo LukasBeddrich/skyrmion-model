@@ -520,7 +520,7 @@ def indexMap(kvec, qRoh, qRohErw, Q1, Q2):
     IndexNewPosList = []
     minpos = np.argmin([np.linalg.norm(kvec-q(i, qRoh, qRohErw, Q1, Q2)) for i in xrange(len(qRohErw))])      # not entirely sure why a plus is needed here...
     
-    IndexPosList = np.asarray([np.where(np.all(qRohErw == qRohErw[i], axis = 1))[0] for i in xrange(len(qRohErw))], dtype = np.uint8)
+    IndexPosList = np.asarray([np.where(np.all(qRohErw == qRohErw[i], axis = 1))[0] for i in xrange(len(qRohErw))]) #NEEEEEEEEEEEEEEVER
     temp = [np.where(np.all(qRohErw + qRohErw[minpos] == qRohErw[j], axis = 1))[0] for j in xrange(len(qRohErw))]
     
     for k in temp:
