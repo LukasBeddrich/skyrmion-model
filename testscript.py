@@ -2,57 +2,34 @@
 
 import skyrmion_model_routines as smr
 import numpy as np
+from multiprocessing import Pool
+from time import time, sleep
 
 #------------------------------------------------------------------------------
 
-BC2 = 45.2919                                                                   # Bc2 as definded, without dipole interaction
-Bx, By, Bz = 0., 0., BC2/2.                                                       # right now arbitrary values, in units of T
-Bhom = np.array([Bx, By, Bz])
-B = np.linalg.norm(Bhom)                                                        # external Bfield in e3 dir
-dirNSky = Bhom/B
+def pooling_fs(n):
+    p = Pool(processes=2)
+    arr = [n for n in xrange(n)]
+    result = p.map(f3, arr)
+    p.close()
+    p.join()
+    return result
 
-#------------------------------------------------------------------------------ # see page 6
+def f1(x):
+    sleep(1)
+    return x*x
 
-nMax = 300
-qMax = 2.1                                                                      # nMax=Anzahl moeglicher q-Vektoren, qMax=radius um Q=0 in dem alle betrachteten q-Vektoren liegen
+def f2(x):
+    sleep(.5)
+    return sum(x)
 
-#------------------------------------------------------------------------------ # see page 6
+def f3(idxs):
+    return np.zeros((3,3)) + idxs
 
-Q1Start = np.array([1.,0.,0.])
-Q2Start = .5 * np.array([-1., np.sqrt(3), 0.])
-
-#------------------------------------------------------------------------------
-
-q1 = 1.
-q2 = 0.
-q3 = 0.
-
-#------------------------------------------------------------------------------
-
-Nx = 1./3
-Ny = 1./3
-Nz = 1./3
-
-DemN = np.array([[Nx, 0., 0.], [0., Ny, 0.], [0., 0., Nz]])
-
-DuD = 2 * 0.34
-t = -1000
-
-#------------------------------------------------------------------------------
-
-qRoh = smr.loadqInd(2.1); nQ = len(qRoh) - 1
-qRohErw = smr.loadqInd(2.1, 4.); nQErw = len(qRohErw) - 1
-
-Q1, Q2 = smr.initQ(q1, q2, q3, dirNSky)
-
-Q = np.array([smr.q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(nQ+1)])
-
-uel = smr.unique_entries(Q)
-
-mag0real = smr.buildmag0(uel)                                                       # keine komplexen zahlen! weniger speicher und ansonsten keine kompatibilität mit MINIMIZE
-
-#------------------------------------------------------------------------------
-
-res = smr.groundState(q1, q2, q3, Bhom, t, DuD, qRoh, qRohErw, mag0real, dirNSky, uel)
-
-print res.x
+if __name__ == '__main__':
+    res = np.array(np.reshape(pooling_fs(9),(9,9)))
+    print res
+    
+"""
+The appropriate methods seem to be PROCESSES, not pools
+"""

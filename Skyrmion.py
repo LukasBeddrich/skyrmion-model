@@ -121,65 +121,79 @@ print "Q1Start = " + str(Qg[3]) + "\nt = %f\nB = %f\nBfrac = %f" % (t, BC2, Bfra
 #NuclearBragg = np.array([1,1,0])
 #QVector = np.array([1.,1.,0.])
 
-def disp_skyrmion_new(Borient, NuclearBragg, QVector, Kvector):
-    RotB = smr.find_rot_mat(Borient, np.asarray([0.,0.,1.]))
+def disp_skyrmion(Borient, NuclearBragg, QVector, Kvector):
+    """
+    Derivate of EnergyWeightsMagnonsFalt
+    Calculates eigenenergies and weights without redundant computations!
+    """
+    try:
+        print 'BC2 = {} \nT = {} \nrings = {} \nBfrac = {} \nBorient = {} \nNuclearbragg = {} \nQVector = {} \n\
+        Kvector = {}'.format(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector)
+        eEnergies, weights = smr.select_EW_from_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, 0.005, Kvector, 0.005).T
+        
+    except ValueError:
+
+        RotB = smr.find_rot_mat(Borient, np.asarray([0.,0.,1.]))
     
     # Additionally, since cubic anisotropies are neglected, the Q - structure points in an arbitrary direction. 
     # One now needs to rotate the system again to match a "real" Q - vector direction with the program - internal Q - direction, i.e. q[1]
-    QInternal = Q[1]
-    nQInternal = np.linalg.norm(Q[1])
-    RotQ = smr.find_rot_mat(np.dot(RotB, QVector), QInternal)
+        QInternal = Qg[1]
+        nQInternal = np.linalg.norm(Qg[1])
+        RotQ = smr.find_rot_mat(np.dot(RotB, QVector), QInternal)
     
     # ogether this forms the rotation matrix, that translates Vectors of the "real world" into program internal vectors
-    RotMat = np.dot(RotQ, RotB)
+        RotMat = np.dot(RotQ, RotB)
     
     # To make life easier, the entered Kvector is normalized to units of QVectors
-    Kvec = Kvector * nQInternal
-    KvecRotated = np.dot(RotMat, Kvec)
-    print 'KvecRotated = {}'.format(KvecRotated)
+        Kvec = Kvector * nQInternal
+        KvecRotated = np.dot(RotMat, Kvec)
+        print 'KvecRotated = {}'.format(KvecRotated)
     
     # The nuclear Bragg vector in this coordinate system is then given by
-    NuclearBraggRotated = np.dot(RotMat, NuclearBragg/np.linalg.norm(NuclearBragg))
-    NuclearBraggRotated /= np.linalg.norm(NuclearBraggRotated)
-    print "Lab system transformed into theory system"
+        NuclearBraggRotated = np.dot(RotMat, NuclearBragg/np.linalg.norm(NuclearBragg))
+        NuclearBraggRotated /= np.linalg.norm(NuclearBraggRotated)
+        print "Lab system transformed into theory system"
     
-    NM = np.zeros((3*len(qRohErw), 3*len(qRohErw)))
+        NM = np.zeros((3*len(qRohErw), 3*len(qRohErw)))
     
     # normalized nuclear Bragg vector
-    NormGVector = np.concatenate((NuclearBraggRotated, np.zeros(3*(len(qRohErw) - 1))))
+        NormGVector = np.concatenate((NuclearBraggRotated, np.zeros(3*(len(qRohErw) - 1))))
     
     # calculate EnergyspectrumFalt and save intermediate results
-    MxF = smr.mCrossMatrixFalt(m, qRoh, qRohErw, np.asarray(KvecRotated[0], KvecRotated[1], KvecRotated[2]), Qg[3], Qg[1]) # Qg's true?
-    SEV = smr.SelectedEigenvectors(MxF)
-    MxSF = smr.chop(np.dot(np.dot(np.conjugate(np.transpose(SEV)), MxF),SEV))
-    fMF = smr.fluctuationMFalt(KvecRotated[0], KvecRotated[1], KvecRotated[2], qRoh, qRohErw, m, Qg, q1g, q2g, q3g, t, DuD)
-    chiI0SF = smr.chop(np.dot(np.dot(np.conjugate(np.transpose(SEV)), fMF),SEV))
-    ESF = np.real(1.j * eigvals(np.dot(MxSF,chiI0SF)))
-    ESF = np.sort(ESF[np.where(ESF > 0)[0]])
+        MxF = smr.mCrossMatrixFalt(m, qRoh, qRohErw, np.asarray([KvecRotated[0], KvecRotated[1], KvecRotated[2]]), Qg[3], Qg[1]) # Qg's true?
+#    return MxF
+        SEV = smr.SelectedEigenvectors(MxF)
+        MxSF = smr.chop(np.dot(np.dot(np.conjugate(np.transpose(SEV)), MxF),SEV))
+        fMF = smr.fluctuationMFalt(KvecRotated[0], KvecRotated[1], KvecRotated[2], qRoh, qRohErw, m, Qg, q1g, q2g, q3g, t, DuD)
+        chiI0SF = smr.chop(np.dot(np.dot(np.conjugate(np.transpose(SEV)), fMF),SEV))
+        ESF = np.real(1.j * eigvals(np.dot(MxSF,chiI0SF)))
+        ESF = np.sort(ESF[np.where(ESF > 0)[0]])
     
-    MxSFinv = inv(MxSF)
-    WeightEs = lambda i: eig( 1.j * ESF[i] *  MxSFinv + chiI0SF)
+        MxSFinv = inv(MxSF)
+        WeightEs = lambda i: eig( 1.j * ESF[i] *  MxSFinv + chiI0SF)
     
     # construct projection matrix that projects onto the first Brillouin zone and to the direction orthogonal to nuclear Bragg vector
-    ProjMatrix = deepcopy(NM)
-    ProjMatrix[:3,:3] = np.eye(3)
-    ProjMatrix -= np.outer(NormGVector, NormGVector)
+        ProjMatrix = deepcopy(NM)
+        ProjMatrix[:3,:3] = np.eye(3)
+        ProjMatrix -= np.outer(NormGVector, NormGVector)
     
-    EnergyWeight = []
-    for i in xrange(len(ESF)):
-        WeightVal, WeightVec = smr.chop2(WeightEs(i))
-        inds = np.argsort(np.abs(WeightVal))[::-1]
-        WeightVal, WeightVec = WeightVal[inds], WeightVec[:,inds]
-        if WeightVal[-1] < 0.001:
-           tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SEV, np.dot(np.outer(WeightVec[:,-1], np.conjugate(WeightVec[:,-1])), 1.j * MxSF)), np.conjugate(np.transpose(SEV))))))
-           EnergyWeight.append([ESF[i], tempw])
-        else:
-            print "Error!"
-            break
-    return np.array(EnergyWeight)
+        EnergyWeight = []
+        for i in xrange(len(ESF)):
+            WeightVal, WeightVec = smr.chop2(WeightEs(i))
+            inds = np.argsort(np.abs(WeightVal))[::-1]
+            WeightVal, WeightVec = WeightVal[inds], WeightVec[:,inds]
+            if WeightVal[-1] < 0.001:
+                tempw = np.real(np.trace(np.dot(ProjMatrix, np.dot(np.dot(SEV, np.dot(np.outer(WeightVec[:,-1], np.conjugate(WeightVec[:,-1])), 1.j * MxSF)), np.conjugate(np.transpose(SEV))))))
+                EnergyWeight.append([ESF[i], tempw])
+            else:
+                print "Error!"
+                break
+        eEnergies, weights = np.array(EnergyWeight).T
+        smr.add_EW_to_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector, eEnergies, weights)
+    return eEnergies/BC2, weights
 #------------------------------------------------------------------------------    
 
-def disp_skyrmion(Borient, NuclearBragg, QVector, Kvector):
+def disp_skyrmion_old(Borient, NuclearBragg, QVector, Kvector):
     """
     
     """

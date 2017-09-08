@@ -2,6 +2,7 @@
 #### Python #############################
 
 *.pyc
+testscript.py
 correct_oder.py
 what_could_possibly_go_wrong.py
 #magnetization_calculator.py 
