@@ -87,7 +87,7 @@ g_QSky = np.array([np.cos(np.pi/6.) ,np.sin(np.pi/6.) ,0.])  # Skyrmion Pinning 
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
 g_sig = 0.02		# linewidth
-g_S0 = 1.			# intensity
+g_S0 = 1000000.			# intensity
 
 g_inc_sig = 0.02	# incoherent width
 g_inc_amp = 1.		# incoherent intensity
@@ -96,9 +96,9 @@ g_T = 28.			# temperature
 
 g_bose_cut = 0.02	# cutoff energy for Bose factor
 
-g_disp = 0			# which dispersion?
+#g_disp = 0			# which dispersion?
 
-g_Escale_emp = 1./30    # empiric estimate to fit the energy scale!
+#g_Escale_emp = 1./30    # empiric estimate to fit the energy scale!
 #
 # the init function is called after Takin has changed a global variable (optional)
 #

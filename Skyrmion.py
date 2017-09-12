@@ -130,7 +130,7 @@ def disp_skyrmion(Borient, NuclearBragg, QVector, Kvector):
         print 'BC2 = {} \nT = {} \nrings = {} \nBfrac = {} \nBorient = {} \nNuclearbragg = {} \nQVector = {} \n\
         Kvector = {}'.format(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, Kvector)
         eEnergies, weights = smr.select_EW_from_table(BC2, t, int(qMax), Bfrac, Borient, NuclearBragg, QVector, 0.005, Kvector, 0.005).T
-        
+        print 'No entries found!\n'
     except ValueError:
 
         RotB = smr.find_rot_mat(Borient, np.asarray([0.,0.,1.]))
