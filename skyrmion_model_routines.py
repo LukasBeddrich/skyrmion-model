@@ -37,8 +37,9 @@ import os
 import sqlite3
 from copy import deepcopy
 from scipy.optimize import minimize
-from scipy.linalg import orth, eigvals
+from scipy.linalg import eigvals
 from matplotlib import cm
+import pathos.pools as pool
 
 ###############################################################################
 
@@ -1059,9 +1060,55 @@ def g_ij3(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     
     
 #------------------------------------------------------------------------------
-
-
+    
 def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
+    """
+    kvec = np.array([kx, ky, lz]) limited to 1. BZ
+    calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ using multiple cores
+    
+    arguments:
+                kx, ky, kz(float):          kompenents of q with Q = G + q where G is reciprocal lattice vector of hex lattice
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                mag(ndarray[mx3]):          mag[:,:2] need to be imaginary! magnetization derived from the result of groundState as given by initmarray(uel, magtoimag(mg0real), Q)
+                Q(ndarray[mx3]):            hex lattice vectors in groundState
+                q1, q2, q3(float):          components of Q1 after minimization process
+                t(float):                   temperature (somehow)
+                DuD(float):                 Dipole interaction strength
+    
+    return:
+                fM(ndarray[3*len(qRoh)x3*len(qRoh)]):
+                                            full, not shifted fluctuation matrix
+                                            
+    !!! INFO !!! I switched i and j to "j,i" in the call of g_ij2, better / "more accurate" would be to switch it in g_ij2 itself.
+                 because of symmetry properties of the fM matrix it is probably equivalent!
+    """
+    nQloc = len(qRoh)
+    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
+    long_list = []
+    
+    #--------------------------------------------------------------------------
+    def g_n_poolprep(n):
+        nn = n
+        subfMs = []
+        while nn <= (nQloc-1):
+            subfM = np.asarray([[g_ij2(n, nn, j, i, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
+            subfMs.append(subfM)
+            nn+=1
+        return subfMs
+    
+    p = pool.ProcessPool(processes=3)
+    long_list.append(p.map(g_n_poolprep, range(nQloc)))
+    #--------------------------------------------------------------------------
+    
+    for idi, rows in enumerate(long_list[0]):
+        for idj, el in enumerate(rows):
+            fM[3*idi:3*(idi+1), 3*(idj+idi):3*(idj+idi+1)] = 2*el
+    
+    return np.triu(fM) + np.conjugate(np.transpose(np.triu(fM,1)))
+
+#------------------------------------------------------------------------------
+
+def fluctuationM_old(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     """
     kvec = np.array([kx, ky, lz]) limited to 1. BZ
     calculates the whole fluctuation Matrix (necessarily hermitian) with size 3nQx3nQ
@@ -1204,6 +1251,39 @@ def positionAddQtoN(b, c, qRoh):
 #------------------------------------------------------------------------------
 
 def mCrossMatrix(mag, qRoh):
+    """
+    calculates the crossMatrix one needs to reverse the loops, compared to mathematica code
+    mathematica multi-loop statements work quite similar to listcomprehension!!!
+    
+    arguments:
+                mag(ndarray[mx3]):          full, complex magnetization
+                qRoh(ndarray[mx2]):         index pairs of the hex lattice
+                
+    return:
+                mx(ndarray):                
+    """
+    
+    nQloc = len(qRoh)
+    LCT = LeviCivitaTensor(3)
+    
+    mx = np.zeros((3*(nQloc), 3*(nQloc)), dtype = np.complex)
+    
+    for l in xrange(3):
+        for j in xrange(3):
+            for i in xrange(3):
+                for c in xrange(nQloc):
+                    for b in xrange(nQloc):                                 
+                        
+                        pos = positionAddQtoN(b,c, qRoh)
+                        if pos != -1:
+                            mx[3*pos + i, 3*c + l] += LCT[i,j,l] * mag[b,j] # was (3)[i,j,l] before but due to difference in array building between mathematica and python...
+                            # not working!!!
+                        b+=1
+    return mx
+
+#------------------------------------------------------------------------------
+
+def mCrossMatrix_old(mag, qRoh):
     """
     calculates the crossMatrix one needs to reverse the loops, compared to mathematica code
     mathematica multi-loop statements work quite similar to listcomprehension!!!
