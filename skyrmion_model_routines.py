@@ -40,7 +40,8 @@ from scipy.optimize import minimize
 from scipy.linalg import eigvals
 from matplotlib import cm
 import pathos.pools as pool
-
+import multiprocessing
+import ctypes
 ###############################################################################
 
 ###############################################################################
@@ -746,6 +747,49 @@ def reswriter(xc, t, B, Ringe):
 #####################   VecBase/MatBaseTrafos(Sky)   ##########################
 ###############################################################################
 
+def VecBaseTrafoSky_new(vec, kvec, qRoh, qRohErw, Q1, Q2):
+    """
+    shifting/ transforming (mostly) row or colum vectors of the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
+    
+    arguments:
+                vec(mod3(len(vec))=0):      vector to be transformed
+                kvec(ndarrray[3?]):         K-vector (also neg. possible)
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+                
+    return:     
+                nv:                      transformed vector
+    """
+    
+    vecp = vec.reshape((-1, 3))     # casts vec into mx3
+    
+    if len(vecp) > len(qRohErw):
+        print "Error: vec > Number of BZ in qRohErw"
+        return None
+    
+    imap = indexMap(kvec, qRoh, qRohErw, Q1, Q2)
+    IndexPosList = imap["IndexPosList"]
+    IndexNewPosList = imap["IndexNewPosList"]
+
+#    kBZ = kvec - q(imap["minpos"], qRoh, qRohErw, Q1, Q2)
+    
+    nv =  np.zeros((len(qRohErw), 3), np.complex)
+    #--------------------------------------------------------------------------
+    def multi_order(INPL, sortfrom, sortin):
+        IPL = range(len(qRohErw))
+    for l in xrange(len(qRohErw)):
+        if IndexNewPosList[l][0] != None and IndexPosList[l, 0] < len(vecp):    # first most important line
+            nv[IndexNewPosList[l][0]] = vecp[IndexPosList[l, 0]]                # second most important line
+            
+    return nv
+
+#------------------------------------------------------------------------------
+
 def VecBaseTrafoSky(vec, kvec, qRoh, qRohErw, Q1, Q2):
     """
     shifting/ transforming (mostly) row or colum vectors of the fluctuation matrix or Mx matrix such that the information 
@@ -786,7 +830,93 @@ def VecBaseTrafoSky(vec, kvec, qRoh, qRohErw, Q1, Q2):
 
 #------------------------------------------------------------------------------
 
+def MatBaseTrafo_new(mat, kvec, qRoh, qRohErw, Q1, Q2):
+    """
+    shifting/ transforming (mostly) the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
+    
+    arguments:
+                vec(mod3(len(vec))=0):      vector to be transformed
+                kvec(ndarrray[3?]):         K-vector (also neg. possible)
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+                
+    return:     
+                Tmat(ndarray[(nQ+1)*3x(nQ+1)*3]):
+                                            transformed matrix
+    """
+    nQErwloc = len(qRohErw)
+    mat_split1, mat_split2, mat_split3 = mat[:nQErwloc], mat[nQErwloc:2*nQErwloc], mat[2*nQErwloc:]
+    id_start1, id_start2, id_start3 = 0, nQErwloc, 2*nQErwloc
+    
+    #--------------------------------------------------------------------------
+    def parallel_Trafo(mat_split, id_start, real, imag):
+        vl = len(mat_split[0])
+        for i, vec in enumerate(mat):
+            tempvec = VecBaseTrafoSky(vec, kvec, qRoh, qRohErw, Q1, Q2).flatten()
+            real[(id_start + i)*vl:(id_start + i + 1)*vl] = np.real(tempvec).tolist()
+            imag[(id_start + i)*vl:(id_start + i + 1)*vl] = np.imag(tempvec).tolist()
+        return
+    #--------------------------------------------------------------------------
+    
+    shared_tempm_real = multiprocessing.Array(ctypes.c_double, len(mat)*len(mat[0]))
+    shared_tempm_imag = multiprocessing.Array(ctypes.c_double, len(mat)*len(mat[0]))
+    
+    
+    p1 = multiprocessing.Process(target = parallel_Trafo, args = (mat_split1, id_start1, shared_tempm_real, shared_tempm_imag))
+    p2 = multiprocessing.Process(target = parallel_Trafo, args = (mat_split2, id_start2, shared_tempm_real, shared_tempm_imag))
+    p3 = multiprocessing.Process(target = parallel_Trafo, args = (mat_split3, id_start3, shared_tempm_real, shared_tempm_imag))
+    
+    p1.start()
+    p2.start()
+    p3.start()
+    
+    p1.join()
+    p2.join()
+    p3.join()
+    
+    
+    return np.transpose(np.asarray(shared_tempm_real).reshape((len(mat)*len(mat[0]))) +\
+                        np.asarray(shared_tempm_imag).reshape((len(mat)*len(mat[0]))) * 1.j)
+    
+#    tempm = np.transpose([VecBaseTrafoSky(i, kvec, qRoh, qRohErw, Q1, Q2).flatten() for i in mat])
+    Tmat = np.transpose([VecBaseTrafoSky(j, kvec, qRoh, qRohErw, Q1, Q2).flatten() for j in tempm])
+    return Tmat
+
+#------------------------------------------------------------------------------
+
 def MatBaseTrafo(mat, kvec, qRoh, qRohErw, Q1, Q2):
+    """
+    shifting/ transforming (mostly) the fluctuation matrix or Mx matrix such that the information 
+    calculated from the normal system can be used for the whole extended system
+    
+    DOES kvec have any relation to an actual connection to reciprocal lattice and hence the scatteing of neutrons?
+    
+    arguments:
+                vec(mod3(len(vec))=0):      vector to be transformed
+                kvec(ndarrray[3?]):         K-vector (also neg. possible)
+                qRoh(ndarray[mx2]):         lattice index set as produced by qIndex
+                qRohErw(ndarray[nx2]):      
+                Q1(ndarray[1x3]):           first basevector of the hex lattice
+                Q2(ndarray[1x3]):           second basevector of the hex lattice
+                
+    return:     
+                Tmat(ndarray[(nQ+1)*3x(nQ+1)*3]):
+                                            transformed matrix
+    """
+    nQloc, nQErwloc = len(qRoh), len(qRohErw)
+    tempm = np.array([VecBaseTrafoSky(i, kvec, qRoh, qRohErw, Q1, Q2).flatten() for i in mat[:3*len(qRoh)]])
+    tempm = np.transpose(np.concatenate((tempm, np.zeros((3*(nQErwloc-nQloc),3*nQErwloc)))))
+    Tmat = np.transpose([VecBaseTrafoSky(j, kvec, qRoh, qRohErw, Q1, Q2).flatten() for j in tempm])
+    return Tmat
+
+#------------------------------------------------------------------------------
+
+def MatBaseTrafo_old(mat, kvec, qRoh, qRohErw, Q1, Q2):
     """
     shifting/ transforming (mostly) the fluctuation matrix or Mx matrix such that the information 
     calculated from the normal system can be used for the whole extended system
@@ -1628,16 +1758,6 @@ def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, r
     QV1min, QV2min, QV3min, QV1max, QV2max, QV3max, Kv1min, Kv2min, Kv3min, Kv1max, Kv2max, Kv3max = veclim(QVector, Kvector, relQV, relKv)
     
     try:
-#        cur.execute('SELECT Energy, Weight FROM %s WHERE BC2 == %f AND Bfrac == %f AND T == %f AND \
-#                    Borient1 == %f AND Borient2 == %f AND Borient3 == %f AND \
-#                    NuclearBragg1== %f  AND NuclearBragg2== %f  AND NuclearBragg3== %f AND\
-#                    QVector1 BETWEEN %f AND %f AND QVector2 BETWEEN %f AND %f AND QVector3 BETWEEN %f AND %f AND \
-#                    Kvector1 BETWEEN %f AND %f AND Kvector2 BETWEEN %f AND %f AND Kvector3 BETWEEN %f AND %f' 
-#                    % (tablename, BC2, Bfrac, T,\
-#                       Borient[0], Borient[1], Borient[2],\
-#                       NuclearBragg[0], NuclearBragg[1], NuclearBragg[2],\
-#                       QV1min, QV1max, QV2min, QV2max, QV3min, QV3max,\
-#                       Kv1min, Kv1max, Kv2min, Kv2max, Kv3min, Kv3max))
         print 'QVmin = ({}, {}, {}) \nQVmax = ({}, {}, {}) \nKvmin = ({}, {}, {}) \nKvmax = ({}, {}, {})'.format(\
                        *veclim(QVector, Kvector, relQV, relKv))
         cur.execute('SELECT Energy, Weight FROM %s WHERE BC2 == %f AND Bfrac == %f AND T == %f AND \
@@ -1654,7 +1774,7 @@ def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, r
     except sqlite3.OperationalError:
         print 'Error during read out'
     except TypeError:
-        print 'Error formatiing SQL Querry'
+        print 'Error formating SQL Querry'
     finally:
         data = np.asarray(cur.fetchall())
 #        print 'returned data such as: {}'.format(data[0,:])
@@ -1670,124 +1790,7 @@ def select_EW_from_table(BC2, T, Ringe, Bfrac, Borient, NuclearBragg, QVector, r
 #####################     visualizations     ##################################
 ###############################################################################
 
-def vis_n_x_system(qRoh, qRohErw):
-    """
-    
-    """
-    # initialize whatsoever
-    nQ = len(qRoh) - 1
-    nQErw = len(qRohErw) - 1
-    
-    # lattice with unshifted BZ
-    q_qRoh = np.array([np.array([0., 0., 0.])] + [q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(1,nQ+1)])
-    q_qRohErw = np.array([np.array([0., 0., 0.])] + [q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(1,nQErw+1)])
-    
-    # plot unshifted BZ with extended lattice
-    plt.figure(facecolor = "w", figsize = (10.,10.))
-    plt.plot(q_qRoh[:,0], q_qRoh[:,1], marker = "o", color = "red", ls = "None", label = "normal system")
-    plt.plot(q_qRohErw[:,0], q_qRohErw[:,1], marker = ".", color = "k", ls = "None", label = "extended system")
-    plt.legend(loc = "upper left", numpoints = 1)
-    for i in xrange(nQ + 1):
-#        plt.text(q_qRoh[i,0] + 0.05, q_qRoh[i,1] + 0.05, "Q(%s)"%str(np.round(np.linalg.norm(q_qRoh[i]),3)), color = "red", fontsize = 7.)
-        plt.text(q_qRoh[i,0] + 0.05, q_qRoh[i,1] + 0.05, "Q(%s)"%str(i), color = "red", fontsize = 7.)
-    for j in xrange(nQErw + 1):
-        plt.text(q_qRohErw[j,0] - 0.2, q_qRohErw[j,1] - 0.3, "Q(%s)"%str(j), color = "k", fontsize = 7.)
-        
-    
-    # new approach to initialize and plot the shifted system, I hope for deeper understanding
-    shiftvect = np.array([-1., 0., 0.])
-    imap = indexMap(shiftvect, qRoh, qRohErw, Q1, Q2)
-    
-    # new coordinates of the normal system
-    qq_qRoh = np.asarray([q(imap["IndexNewPosList"][i][0], qRoh, qRohErw, Q1, Q2) for i in xrange(len(qRohErw)) if imap["IndexNewPosList"][i][0] != None and imap["IndexPosList"][i][0] < len(qRoh)])
-    #getting the old entries at the new lattice sites ; which of the two next line does not make a difference
-    #qstr = np.asarray([np.asarray(imap["IndexPosList"][i]) for i in xrange(len(qRohErw)) if imap["IndexNewPosList"][i][0] != None and imap["IndexPosList"][i][0] < len(qRoh)])
-    qstr = np.asarray([np.asarray(imap["IndexPosList"][i]) for i in xrange(len(qRoh))])
-    
-    
-    """
-    # not sure what this does exactly... guess I did know once xP
-    vectlong = np.asarray([[k,k,k] for k in xrange(1, nQ + 2)])
-    kvect = np.array([2.1, 1.3, 0.])
-    
-    nv = VecBaseTrafoSky(vectlong, 0.15, kvect, qRoh, qRohErw, Q1, Q2)
-    imap = indexMap(kvect, qRoh, qRohErw, Q1, Q2)
-    
-    qq_qRoh = np.asarray([q(i, qRoh, qRohErw, Q1, Q2) for i in xrange(len(nv)) if nv[i,0] != 0.])
-    qstr = np.asarray([np.where(np.asarray(imap["IndexNewPosList"]) == i)[0] for i in xrange(len(nv)) if nv[i,0] != 0.])
-    
-    """
-    # plot shifted BZ with extended lattice
-    plt.figure(facecolor = "w", figsize = (10.,10.))
-    plt.plot(qq_qRoh[:,0], qq_qRoh[:,1], marker = "s", color = "blue", ls = "None", label = "shifted system")
-    plt.plot(q_qRohErw[:,0], q_qRohErw[:,1], marker = ".", color = "k", ls = "None", label = "extended system")
-    plt.arrow(0., 0., shiftvect[0], shiftvect[1], head_width = 0.2, head_length = 0.4, length_includes_head = True, color = "green", label = "K-vector")
-    plt.legend(loc = "upper left", numpoints = 1)    
-    for j in xrange(nQErw + 1):
-        plt.text(q_qRohErw[j,0] - 0.2, q_qRohErw[j,1] - 0.3, "Q(%s)"%str(j), color = "k", fontsize = 7.)
-        
-    for i in xrange(nQ + 1):
-#        plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(np.round(np.abs(np.linalg.norm(qq_qRoh[i] - q(34, qRoh, qRohErw, Q1, Q2))),3)), color = "blue", fontsize = 7.)
-        plt.text(qq_qRoh[i,0] + 0.05, qq_qRoh[i,1] + 0.05, "Q(%s)"%str(qstr[i][0]), color = "blue", fontsize = 7.)
 
-#------------------------------------------------------------------------------
-#%%
-def disp(k, specs):
-    """
-    plotting first disp-rel
-    k: 1D arrays
-    specs: 2D array, multiple branches for at each k
-    """
-    c = cm.hot(np.linspace(0, 255, 15, dtype = np.uint8))
-    fig = plt.figure(facecolor = "w", figsize = (6,8))
-    plt.ylabel(r"$\hbar \omega$ [arb.u.]")
-    plt.xlabel(r"(k,0,0) [arb.u.]")
-    for i in xrange(len(specs[0,:])):
-        plt.plot(k, specs[:,i], marker = "o", mfc = tuple(c[i]), mec = "k", ls = "-", color = tuple(c[i]))
-
-#------------------------------------------------------------------------------
-#%%
-def show_chInvfill(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD):
-    """
-    
-    """
-    eps = np.arange(30,50)
-    xspec = energySpectrum(mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD)
-    y = []
-    for i in eps:
-        y.append(np.sort(chop(eigvals(chiInvFullSel(i, mag, qRoh, kx, ky, kz, Q, q1, q2, q3, t, DuD)))))
-    
-    y = np.asarray(y)
-    y2 = np.real(np.asarray([y[i,np.argsort(np.abs(y[i]))] for i in xrange(21)]))
-    plt.figure(facecolor = "w")
-    plt.plot(eps,y2[:,0], "b-")
-    plt.plot(xspec, [0 for j in xrange(len(xspec))], "ro", ls = "None", mec = "k")
-    plt.ylabel(r"$\chi^{-1}$ [arb.u.]")
-    plt.xlabel("frequency [arb.u.]")
-    plt.xlim(xmin = 0, xmax = 60)
-    plt.ylim(ymin = -1, ymax = 1)
-    
-    return y, xspec
-    
-#------------------------------------------------------------------------------
-#%%
-def vis_disp_weight(EW, ks):
-    """
-    
-    """
-    hbar_omega = np.transpose(np.asarray(EW)[:,:,0]/45.2919)
-    weights = np.transpose(np.asarray(EW)[:,:,1])
-    
-    wmax, wmin = np.max(weights), np.min(weights)
-    ms = lambda w: 80. * (w-wmin)/(wmax-wmin) + 1.
-    c = cm.plasma(np.linspace(0, 255, weights.shape[0], dtype = np.uint8))
-    
-    fig = plt.figure()
-    for i in xrange(len(hbar_omega)):    
-        plt.scatter(ks, hbar_omega[i], s = ms(weights[i]), c = tuple(c[i]), marker = "o", alpha = 0.75)
-    plt.ylabel(r"$\hbar \omega$ [arb.u.]", fontsize = 13.)
-    plt.xlabel(r"(0,-k,0) [arb.u.]", fontsize = 13.)
-    plt.title("Dispersion relation | weight indicated by dot size", fontsize = 17.)
     
 ###############################################################################
 ###############################################################################
@@ -1820,22 +1823,7 @@ Qg = np.array([q(i, qRoh, qRohErw, Q1g, Q2g) for i in xrange(nQ+1)])
 m = initmarray(uel, magtoimag(magmatica), Qg)
 """
 #------------------------------------------------------------------------------
-#%%
-def calc_disp_weight(mag, qRoh, Q, q1, q2, q3, t, DuD):
-    """
-    
-    """
-    Borient = np.array([0,0,1])
-    NuclearBragg = np.array([1,1,0])
-    QVector = np.array([0,1,0])
-    Kvector = np.array([0,-1,0])#/np.sqrt(2)#*0.15
-    
-    EW = []
-    ks = np.linspace(-0.199,0.201, 5)
-    
-    for dk in ks:
-        EW.append(EnergyWeightsMagnons(mag, qRoh, Q, q1, q2, q3, t, DuD, Borient, NuclearBragg, QVector, Kvector * dk))
-    
-    return EW, ks
+
+
 
 ###############################################################################

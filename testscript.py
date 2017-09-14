@@ -2,9 +2,10 @@
 
 import skyrmion_model_routines as smr
 import numpy as np
-from multiprocessing import Pool
+import multiprocessing
 from time import time, sleep
 from copy import deepcopy
+import sys
 #import pathos.pools as pp
 #------------------------------------------------------------------------------
 ## Pathes
@@ -12,52 +13,6 @@ from copy import deepcopy
 
 
 ###############################################################################
-
-""" !!! DOES IT WORK ??? """
-
-def fluctuationM_newpool(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
-    """
-    fluctuationM with multiprocessing Pool
-    """
-    
-    nQloc = len(qRoh)
-    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
-    
-    def g_n_poolprep(n):
-        nn = n
-        while nn <= (nQloc-1):
-            subfM = np.asarray([[smr.g_ij2(n, nn, j, i, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
-            fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
-            nn+=1
-            
-    p = Pool(processes=3)
-    p.map(g_n_poolprep, range(nQloc))
-    p.close()
-    p.join()
-    
-    return 2. * (np.triu(fM) + np.conjugate(np.transpose(np.triu(fM,1))))
-
-#------------------------------------------------------------------------------
-
-def fluctuationM_new(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
-    """
-    fluctuationM using hermitian symmertie
-    """
-        
-    nQloc = len(qRoh)
-    
-    fM = np.zeros((3*nQloc, 3*nQloc), dtype = np.complex)
-    
-    
-    for n in xrange(nQloc):
-        nn = deepcopy(n)
-        while nn <= (nQloc-1):
-            subfM = np.asarray([[smr.g_ij2(n, nn, j, i, kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD) for i in (0,1,2)] for j in (0,1,2)], dtype = np.complex)
-            fM[3*n:3*n+3, 3*nn:3*nn+3] = deepcopy(subfM)
-            nn += 1
-    
-
-    return 2.*(np.triu(fM) + np.conjugate(np.transpose(np.triu(fM,1))))
 
 ###############################################################################
 
@@ -81,7 +36,7 @@ def f3(idxs):
     return np.zeros((3,3)) + idxs
 
 ###############################################################################
-
+"""
 from pathos.pools import ParallelPool
 
 
@@ -98,10 +53,75 @@ if __name__ == '__main__':
     p.close()
     p.join()
 
+np.random.seed(0)
+sample = np.random.rand(12)
+neworder = np.random.randint(12)
+"""
+"""
+def worker():
+    name = multiprocessing.current_process().name
+    print name, 'Starting'
+    sleep(2)
+    print name, 'Exiting'
+    
+def my_service():
+    name = multiprocessing.current_process().name
+    print name, 'Starting'
+    sleep(3)
+    print name, 'Exiting'
+"""
+"""
+class Consumer(multiprocessing.Process):
+    
+    def __init__(self, task_queue, result_queue):
+        multiprocessing.Process.__init__(self)
+        self.task_queue = task_queue
+        self.result_queue = result_queue
+        
+    def run(self):
+        proc_name = self.name
+        while True:
+            next_task = self.task_queue.get()
+            if next_task is None:
+                # Poison pill means shutdown
+                print '%s: Exiting' % proc_name
+                self.task_queue.task_done()
+                break
+            print '%s: %s' % (proc_name, next_task)
+            answer = next_task()
+            self.task_queue.task_done()
+            self.result_queue.put(answer)
+        return            
 
+class Task(object):
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+    def __call__(self):
+        sleep(0.1)
+        return '%s * %s = %s' % (self.a, self.b, self.a * self.b)
+    def __str__(self):
+        return '%s * %s' % (self.a, self.b)
+    
+    
+if __name__ == '__main__':
+    d = multiprocessing.Process(name='daemon', target=daemon)
+    d.daemon = True
 
+    n = multiprocessing.Process(name='non-daemon', target=non_daemon)
+    n.daemon = False
 
+    d.start()
+    sleep(1)
+    n.start()
+    
+    d.join(1)
+    print 'd.is_alive()', d.is_alive()
+    n.join()
+"""
 
+def calc_square(numbers, result):
+    pass
 """
 The appropriate methods seem to be PROCESSES, not pools
 """
