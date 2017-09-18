@@ -1299,7 +1299,7 @@ def fluctuationMFalt(kx, ky, kz, qRoh, qRohErw, mag, Q, q1, q2, q3, t, DuD):
     minpos = indexMap(kvec, qRoh, qRohErw, Q[3], Q[1])["minpos"]                # Q1 == Q[3] and Q2 == Q[1] is in this convention always true
     
     kBZ = kvec - Q[minpos]
-    print 'kBZ = ', kBZ
+#    print 'kBZ = ', kBZ
     
     return MatBaseTrafo2(fluctuationM(kBZ[0], kBZ[1], kBZ[2], qRoh, mag, Q, q1, q2, q3, t, DuD), kvec, qRoh, qRohErw, Q[3], Q[1])
 

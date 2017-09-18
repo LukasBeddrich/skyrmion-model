@@ -6,6 +6,7 @@ import multiprocessing
 from time import time, sleep
 from copy import deepcopy
 import sys
+import matplotlib.pyplot as plt
 #import pathos.pools as pp
 #------------------------------------------------------------------------------
 ## Pathes
@@ -125,3 +126,19 @@ def calc_square(numbers, result):
 """
 The appropriate methods seem to be PROCESSES, not pools
 """
+
+import skyrmion_sqw as s_sqw
+
+def bar_spec(E, W):
+    """
+    
+    """
+    fac = 1.
+    Wp = np.array([W[i]*fac*s_sqw.bose_cutoff(ee, 28.) for i, ee in enumerate(E)])
+    
+    fig = plt.figure(facecolor = 'w', figsize = (6.,4.))
+    plt.bar(E, Wp, width = 0.005, alpha = 0.8, color = "maroon")
+    plt.xlim(xmin=-0.8, xmax=0.0)
+    plt.xlabel('Energy [meV]')
+    plt.ylabel('Intensity [arb.u.]')
+    plt.show()

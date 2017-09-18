@@ -82,17 +82,17 @@ def rlutokh(h,k,l,g_G = (1., 1., 0.)):
 
 # global variables which can be accessed / changed by Takin
 g_Bo = np.array([0., 0., 1.])   # magnetic field orientation
-g_QSky = np.array([np.cos(np.pi/6.) ,np.sin(np.pi/6.) ,0.])  # Skyrmion Pinning direction
+g_QSky = np.array([np.cos(np.pi/6.), np.sin(np.pi/6.), 0.])  # Skyrmion Pinning direction
 #g_QSky = np.array([1., 1., 0.])
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
 g_sig = 0.02		# linewidth
-g_S0 = 1000000.			# intensity
+g_S0 = 2000000.			# intensity
 
 g_inc_sig = 0.02	# incoherent width
-g_inc_amp = 1.		# incoherent intensity
+g_inc_amp = 10000000.		# incoherent intensity
 
-g_T = 28.			# temperature
+g_T = 28.1			# temperature
 
 g_bose_cut = 0.02	# cutoff energy for Bose factor
 
