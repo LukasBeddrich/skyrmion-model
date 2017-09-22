@@ -1112,6 +1112,7 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     
     kBZ = np.array([kx, ky, kz])
     nQloc = len(qRoh)
+    LCT = LeviCivitaTensor(3)
     
     gt11 = 0.
     gt12 = 0.
@@ -1121,7 +1122,7 @@ def g_ij2(n, nn, i, j,  kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
     if n == nn:
         gt11 = (1 + t + (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ)) \
             - 0.0073 * (np.dot(Q[n], Q[n]) + 2*np.dot(Q[n], kBZ) + np.dot(kBZ, kBZ))**2/(q1**2 + q2**2)) \
-            * krondelta(i, j) - 2.j * np.dot(LeviCivitaTensor(3)[i,j], Q[n] + kBZ)
+            * krondelta(i, j) - 2.j * np.dot(LCT[i,j], Q[n] + kBZ)
     
         if np.allclose(Q[n] + kBZ, np.array([0., 0., 0.])):
             gt12 = DemN[i, j]
@@ -1225,10 +1226,10 @@ def fluctuationM(kx, ky, kz, qRoh, mag, Q, q1, q2, q3, t, DuD):
             subfMs.append(subfM)
             nn+=1
         return subfMs
-    
+    #--------------------------------------------------------------------------
     p = pool.ProcessPool(processes=3)
     long_list.append(p.map(g_n_poolprep, range(nQloc)))
-    #--------------------------------------------------------------------------
+    
     
     for idi, rows in enumerate(long_list[0]):
         for idj, el in enumerate(rows):

@@ -87,10 +87,11 @@ g_QSky = np.array([np.cos(np.pi/6.), np.sin(np.pi/6.), 0.])  # Skyrmion Pinning 
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
 g_sig = 0.02		# linewidth
-g_S0 = 2000000.			# intensity
+g_S0 = 1.			# intensity
 
-g_inc_sig = 0.02	# incoherent width
-g_inc_amp = 10000000.		# incoherent intensity
+g_inc_sig = 0.057	# incoherent width
+g_inc_amp = 50.9		# incoherent intensity
+g_bckg = 1.
 
 g_T = 28.1			# temperature
 
@@ -151,7 +152,7 @@ def TakinSqw(h, k, l, E):
 #		S_m = gauss(E, Em_peak, g_sig, g_S0*wm_peak)
         incoh = gauss(E, 0., g_inc_sig, g_inc_amp)
 
-        S = (S_p + S_m)*bose_cutoff(E, g_T, g_bose_cut) + incoh
+        S = (S_p + S_m)*bose_cutoff(E, g_T, g_bose_cut) + incoh + g_bckg
 #		print("S={0}".format(S))
         return S
     except ZeroDivisionError:
