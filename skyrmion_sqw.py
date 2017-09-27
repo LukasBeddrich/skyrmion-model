@@ -81,25 +81,22 @@ def rlutokh(h,k,l,g_G = (1., 1., 0.)):
 # -----------------------------------------------------------------------------
 
 # global variables which can be accessed / changed by Takin
+
 g_Bo = np.array([0., 0., 1.])   # magnetic field orientation
 g_QSky = np.array([np.cos(np.pi/6.), np.sin(np.pi/6.), 0.])  # Skyrmion Pinning direction
-#g_QSky = np.array([1., 1., 0.])
 g_G = np.array([1., 1., 0.])	# Bragg peak
 
-g_sig = 0.02		# linewidth
+g_sig = 0.02    		# linewidth
 g_S0 = 1.			# intensity
 
-g_inc_sig = 0.057	# incoherent width
-g_inc_amp = 50.9		# incoherent intensity
+g_inc_sig = 0.057   	# incoherent width
+g_inc_amp = 835.		# incoherent intensity
 g_bckg = 1.
 
 g_T = 28.1			# temperature
 
-g_bose_cut = 0.02	# cutoff energy for Bose factor
+g_bose_cut = 0.02	    # cutoff energy for Bose factor
 
-#g_disp = 0			# which dispersion?
-
-#g_Escale_emp = 1./30    # empiric estimate to fit the energy scale!
 #
 # the init function is called after Takin has changed a global variable (optional)
 #
@@ -139,7 +136,7 @@ def TakinSqw(h, k, l, E):
     hkl in rlu --> transform to kh
     """
     hkl_intern = rlutokh(h,k,l,g_G)[1]
-    print 'tranfsformed (h,k,l) = {} into (h_int, k_int, l_int) = {}'.format((h, k, l), tuple(hkl_intern))
+    print 'tranfsformed (h,k,l) = {} into (h_int, k_int, l_int) = {}\n'.format((h, k, l), tuple(hkl_intern))
     try:
 #		print("h={0}, k={1}, l={2}, E={3}".format(h,k,l,E))
         [Ep_peak, Em_peak], [wp_peak, wm_peak] = TakinDisp(*hkl_intern)
